@@ -1,0 +1,227 @@
+
+\documentclass[a4paper,UKenglish,cleveref,nameinlink,autoref,thm-restate]{lipics-v2019}
+%This is a template for producing LIPIcs articles. 
+%See lipics-manual.pdf for further information.
+%for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
+%for british hyphenation rules use option "UKenglish", for american hyphenation rules use option "USenglish"
+%for section-numbered lemmas etc., use "numberwithinsect"
+%for enabling cleveref support, use "cleveref"
+%for enabling autoref support, use "autoref"
+%for anonymousing the authors (e.g. for double-blind review), add "anonymous"
+%for enabling thm-restate support, use "thm-restate"
+
+\bibliographystyle{plainurl}% the mandatory bibstyle
+
+\title{Why not W?}
+
+\author{Jasper Hugunin}{Carnegie Mellon University, Pittsburgh PA, USA}{jasper@hugunin.net}{https://orcid.org/0000-0002-1133-5354}{}
+
+\authorrunning{J. Hugunin}
+
+\Copyright{Jasper Hugunin}
+
+\ccsdesc[500]{Theory of computation~Type theory}
+
+\keywords{dependent types, intensional type theory, inductive types, W types}
+
+\relatedversion{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
+%\relatedversion{A full version of the paper is available at \url{...}.}
+
+\supplement{}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
+
+% \acknowledgements{I want to thank \dots}%optional
+
+%\nolinenumbers %uncomment to disable line numbering
+
+%\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
+
+%Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\EventEditors{John Q. Open and Joan R. Access}
+\EventNoEds{2}
+\EventLongTitle{42nd Conference on Very Important Topics (CVIT 2016)}
+\EventShortTitle{CVIT 2016}
+\EventAcronym{CVIT}
+\EventYear{2016}
+\EventDate{December 24--27, 2016}
+\EventLocation{Little Whinging, United Kingdom}
+\EventLogo{}
+\SeriesVolume{42}
+\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\usepackage{float}
+%\floatstyle{boxed} 
+%\restylefloat{figure}
+
+\newcommand{\zero}{0}
+\newcommand{\one}{1}
+\newcommand{\bool}{2}
+\newcommand{\true}{\mathtt{tt}}
+\newcommand{\false}{\mathtt{ff}}
+\newcommand{\codeO}{\mathtt{\hat{O}}}
+\newcommand{\codeS}{\mathtt{\hat{S}}}
+
+\DeclareMathOperator{\supop}{sup}
+\renewcommand{\sup}[2]{\supop {#1}\:\!{#2}}
+
+\newcommand{\N}{\hyperref[define-N]{\mathbb{N}}}
+\newcommand{\preN}{\hyperref[define-preN]{\tilde{\mathbb{N}}}}
+
+\DeclareMathOperator{\case}{\mathtt{case}}
+\newcommand{\caset}[2]{\case {#1}\;\mathtt{of}\;\{{#2}\}}
+
+%\newcommand{\casepath}[4]{\case {#1};\mathtt{inl}\;\Id{\mathunderscore}{#2}\;\mathtt{return}\;{#3}\;\mathtt{of}\;\{\refl\mapsto{#4}\}}
+
+\DeclareMathOperator{\Idop}{\mathrm{Id}}
+\newcommand{\Id}[2]{\Idop {#1}\;{#2}}
+\newcommand{\IdA}[3]{\Idop_{#1}{#2}\;{#3}}
+\newcommand{\refl}{\mathrm{refl}}
+
+\DeclareMathOperator{\inl}{\mathtt{inl}}
+\DeclareMathOperator{\inr}{\mathtt{inr}}
+
+\DeclareMathOperator{\fst}{\mathtt{fst}}
+\DeclareMathOperator{\snd}{\mathtt{snd}}
+
+\DeclareMathOperator{\canonical}{\hyperref[define-canonical]{\mathtt{canonical}}}
+
+\newcommand{\ISO}{\mathrm{ISO}}
+\newcommand{\ISS}{\mathrm{ISS}}
+
+\newcommand{\zerO}{\hyperref[define-O]{\mathrm{O}}}
+\DeclareMathOperator{\Succ}{\hyperref[define-S]{S}}
+\DeclareMathOperator{\recN}{\mathrm{rec\mathbb{N}}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+In an extensional setting, $W$ types are sufficient to construct a broad class of inductive types, but in intentional type theory the standard construction of even the natural numbers does not satisfy the required induction principle. In this paper, we show how to refine the standard construction of inductive types such that the induction principle is provable and computes as expected in intensional type theory.
+\end{abstract}
+
+\section{Introduction}
+
+In intensional type theory with only type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $W$, $\Idop$ and $U$, can the natural numbers be constructed?
+
+The $W$ type \cite{mltt} captures the essence of induction, and in extensional type theory it is straightforward to construct familiar inductive types out of it, including the natural numbers \cite{dybjer-W-encodes-inductive}.
+Taking the elements of the two-element type $\bool$ to be $\codeO$ and $\codeS$, we define \begin{equation}\label{define-preN}\preN = W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}).\end{equation}
+However, as is well known \cite{dybjer-W-encodes-inductive,luo-wellordering,mcbride_wtypes,programming-in-MLTT}, in intensional type theory we cannot prove the induction principle for $\preN$ without function extensionality. The obstacle is in the $\codeO$ case, where we end up needing to prove $P\;f$ for an arbitrary $f : \zero \to \preN$, when we only know $P\;(x\mapsto\caset{x}{})$.
+
+Can this obstacle be avoided?
+The answer turns out to be yes; in this paper, we show that refining the standard construction allows the natural numbers and many other inductive types to be constructed from $W$ in intensional type theory.
+
+\paragraph*{Type-theoretic notations and assumptions}
+
+We work in a standard intensional type theory with
+dependent function types $\Pi_{a : A}B[a]$ (also written $\forall_{a : A}B[a]$, $(a : A) \to B[a]$, non-dependent version $A \to B$, constructed as $(x \mapsto y[x])$ or $(\lambda x.\;y[x])$),
+dependent pair types $\Sigma_{a : A}B[a]$ (also written $(a : A) \times B[a]$, non-dependent version $A \times B$, constructed as $(x, y)$, destructed as $\fst p$, $\snd p$),
+finite types $\zero$, $\one$ (with inhabitant $\star$), $\bool$ (with inhabitants $\false$ and $\true$, aliased to $\codeO$ and $\codeS$ when we are talking about constructing the natural numbers),
+$W$ types $W_{a : A}B[a]$ (constructor $\sup{a}{f}$ for $a : A$ and $f : B[a] \to W_{a}B[a]$),
+identity types $\IdA{A}{x}{y}$ (constructor $\refl$, destruction of $e : \Id{x}{y}$ keeps $x$ fixed and generalizes over $y$ and $e$),
+and a universe $U$.
+We define the coproduct $A + B$ as $\sum_{b : \bool}\caset{b}{\false\mapsto A, \true\mapsto B}$, and notate the injections as $\inl$ and $\inr$.
+
+Function extensionality is the principle that pointwise equal functions are equal, and uniqueness of identity proofs is the principle that any two elements of $\Id{x}{y}$ are equal. We do \emph{not} assume either of these principles.
+
+We require strict $\beta$-rules for all type formers, and strict $\eta$ for $\Sigma$ (that $p = (\fst p, \snd p)$). For convenience we will also assume strict $\eta$ for $\Pi$ and $\one$ (that $f = (x \mapsto f x)$ and $u = \star$).
+
+\section{Constructing \texorpdfstring{$\N$}{ℕ} (for real this time)}
+
+We run into problems in the $\codeO$ case because we don't know that $f = (x\mapsto\caset{x}{})$.
+To solve those problems, we will assume them away.
+To construct $\N$, we will first define a predicate $\canonical : \preN \to U$ such that $\canonical(\sup{\codeO}{f})$ implies $\Id{(x\mapsto\caset{x}{})}{f}$.
+We then let $\N = \Sigma_{x : \preN}\canonical x$ be the canonical elements of $\preN$ (with $\preN$ defined by \cref{define-preN}).
+This predicate will be defined by induction on $W$, so we can start out with \[\canonical (\sup{x}{f}) =\; ? : U\qquad\text{($x : \bool$, $f : \dots \to \preN$, may use $\canonical (f\; i) : U$)}.\]
+The obvious next thing to do is to split by cases on $x : \bool$:
+\begin{gather*}
+\canonical (\sup{\codeO}{f}) =\; ? : U\qquad\text{($f : \zero \to \preN$, may use $\canonical(f\;i)$)},\\
+\canonical (\sup{\codeS}{f}) =\; ? : U\qquad\text{($f : \one \to \preN$, may use $\canonical(f\;i)$)}.
+\end{gather*}
+We need canonical terms to be \emph{recursively} canonical, that is, we want to include the condition that all sub-terms are canonical.
+For the $\codeS$ case, thanks to the strict $\eta$ rules for $\one$ and $\Pi$, the types $\canonical(f\;\star)$ and $(i : \one) \to \canonical(f\;i)$ are equivalent; we can use either one.
+This will be the only condition we need for the $\codeS$ case, so we can complete this part of the definition:
+\[\canonical (\sup{\codeS}{f}) =\canonical(f\;\star).\]
+The $\codeO$ case is the interesting one.
+The blind translation of ``every sub-term is canonical'' is $(i : \zero) \to \canonical(f\;i)$.
+However, this leads to the same problem as before; without function extensionality we can't work with functions out of $\zero$.
+Luckily, we have escaped the rigid constraints of the $W$ type former, and have the freedom to translate the recursive condition as simply $\one$.
+No sub-terms of zero, no conditions necessary!
+\[\canonical (\sup{\codeO}{f}) =\; ? : U\qquad\text{($f : \zero \to \preN$)}\]
+That is all well and good, but we can't forget why we are here in the first place: we need $\Id{(x\mapsto\caset{x}{})}{f}$.
+Luckily, there is a hole just waiting to be filled:
+\[\canonical (\sup{\codeO}{f}) = \Id{(x\mapsto\caset{x}{})}{f}.\]
+
+\begin{definition}The complete definition of $\N$:
+\begin{gather}
+\preN = W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}) : U,\nonumber\\
+\begin{aligned}
+\canonical& : \preN \to U,\\
+\canonical& (\sup{\codeO}{f}) = \Id{(x\mapsto\caset{x}{})}{f},\\
+\canonical& (\sup{\codeS}{f}) = \canonical(f\;\star),
+\end{aligned}\label{define-canonical}\\
+\N = \Sigma_{x : \preN}\canonical x : U,\label{define-N}\\
+\zerO = (\sup{\codeO}{(x\mapsto\caset{x}{})},\refl) : \N,\label{define-O}\\
+\Succ = n \mapsto (\sup{\codeS}{(\star \mapsto \fst n)},\snd n) : \N \to \N.\label{define-S}
+\end{gather}
+\end{definition}
+
+\paragraph*{Induction}
+
+Now we are ready for the finale: induction for $\N$ with the right computational behavior.
+
+Assume we are given a type $P[n]$ which depends on $n : \N$, along with terms $\ISO : P[\zerO]$ and $\ISS : \forall_{n : \N}P[n] \to P[\Succ\;n]$. Our mission is to define a term $\recN : \forall_{n : \N}P[n]$. Happily, the proof goes through if we simply follow our nose.
+
+We begin by inducting on $\fst n : \preN$, and then case on $\codeO$ vs $\codeS$, just like the definition of $\canonical$.
+\begin{gather*}
+\recN (\sup{\codeO}{f},y) =\; ? : P[(\sup{\codeO}{f},y)]\qquad\text{($f : \zero \to \preN$, $y : \Id{(x\mapsto\caset{x}{})}{f}$)},\\
+\recN (\sup{\codeS}{f},y) =\; ? : P[(\sup{\codeS}{f},y)]\qquad\text{($f : \one \to \preN$, $y : \canonical(f\;\star)$)}.\\
+\text{(where we may make recursive calls $\recN(f\; i, y')$ for any $i$ and $y'$)}
+\end{gather*}
+
+In the $\codeS$ case, $f = (\star \mapsto f\; \star)$ by the $\eta$ rules for $\one$ and $\Pi$, and thus $(\sup{\codeS}{f}, y) = S\;(f\; \star, y)$. We can thus define
+\begin{equation*}\recN (\sup{\codeS}{f},y) = \ISS\;(f\;\star, y)\;(\recN(f\;\star, y)).\end{equation*}
+
+The $\codeO$ case is again the interesting one, but it is only a little tricky. We know $\ISO : P[ (\sup{\codeO}{(x\mapsto\caset{x}{})},\refl)]$, and we want $P[(\sup{\codeO}{f},y)]$. But since we have $y : \Id{(x\mapsto\caset{x}{})}{f}$, this is a direct application of the eliminator for $\Idop$.
+We thus complete the definition of $\recN$ with
+\begin{equation*}\recN (\sup{\codeO}{f},y) = \caset{y}{\refl \mapsto \ISO}.\end{equation*}
+
+Examining the definitions, we can see that as long as we have strict $\eta$ for $\Sigma$ and strict $\beta$ for $\Idop$, $\recN \zerO = \ISO$ and $\recN(\Succ n) = \ISS\;n\;(\recN\;n)$. Thus we have indeed defined the natural numbers with the expected induction principle and computational behavior out of the $W$ type.
+
+\begin{definition}Induction for $\N$: given
+\begin{gather}
+\text{a type $P[n]$ depending on $n : \N$},\\
+\ISO : P[\zerO],\\
+\ISS : \forall_{n : \N}P[n] \to P[\Succ\;n],
+\end{gather}
+we have
+\begin{gather}
+\begin{aligned}
+\recN& : \forall_{n : \N}P[n],\\
+\recN& (\sup{\codeO}{f},y) = \caset{y}{\refl \mapsto \ISO},\\
+\recN& (\sup{\codeS}{f},y) = \ISS\;(f\;\star, y)\;(\recN(f\;\star, y)),
+\end{aligned}\label{define-recN}\\
+\recN \zerO = \ISO\label{recN-eqO},\\
+\recN(\Succ n) = \ISS\;n\;(\recN\;n)\label{recN-eqS}.
+\end{gather}
+\end{definition}
+
+\begin{theorem}
+    The natural numbers can indeed be constructed in intensional type theory with only type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $W$, $\Idop$ and $U$, such that the induction principle has the expected computational behavior.
+\end{theorem}
+
+%%
+%% Bibliography
+%%
+
+%% Please use bibtex, 
+
+\bibliography{whynotw}
+
+\appendix
+
+\section{First Appendix}
+
+Lorem ipsum
+
+\end{document}
