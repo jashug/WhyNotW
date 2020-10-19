@@ -138,7 +138,7 @@ The obvious next thing to do is to split by cases on $x : \bool$:
 \canonical (\sup{\codeO}{f}) =\; ? : U\qquad\text{($f : \zero \to \preN$, may use $\canonical(f\;i)$)},\\
 \canonical (\sup{\codeS}{f}) =\; ? : U\qquad\text{($f : \one \to \preN$, may use $\canonical(f\;i)$)}.
 \end{gather*}
-We need canonical terms to be \emph{recursively} canonical, that is, we want to include the condition that all sub-terms are canonical.
+We need canonical terms to be \emph{hereditarily} canonical, that is, we want to include the condition that all sub-terms are canonical.
 For the $\codeS$ case, thanks to the strict $\eta$ rules for $\one$ and $\Pi$, the types $\canonical(f\;\star)$ and $(i : \one) \to \canonical(f\;i)$ are equivalent; we can use either one.
 This will be the only condition we need for the $\codeS$ case, so we can complete this part of the definition:
 \[\canonical (\sup{\codeS}{f}) =\canonical(f\;\star).\]

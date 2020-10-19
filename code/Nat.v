@@ -23,10 +23,10 @@ Arguments Id {A} x y.
 Arguments refl {A} x, {A x}.
 
 Record prod@{i} (A : Type@{i}) (B : A -> Type@{i}) : Type@{i}
-  := pair { p1 : A ; p2 : B p1 }.
-Arguments pair {A B} p1 p2.
-Arguments p1 {A B} _.
-Arguments p2 {A B} _.
+  := pair { fst : A ; snd : B fst }.
+Arguments pair {A B} fst snd.
+Arguments fst {A B} _.
+Arguments snd {A B} _.
 
 Inductive W@{i} (A : Type@{i}) (B : A -> Type@{i}) : Type@{i}
   := sup (a : A) (f : B a -> W A B) : W A B.
@@ -48,8 +48,8 @@ Fixpoint canonical (n : N_pre) : Set
      end.
 
 Definition N : Set := prod N_pre canonical.
-Definition O : N := pair (sup false _) refl.
-Definition S (n : N) : N := pair (sup true _) (pair (p1 n) (pair refl (p2 n))).
+Definition O : N := pair (sup OO _) refl.
+Definition S (n : N) : N := pair (sup SS _) (pair (fst n) (pair refl (snd n))).
 
 (*
 And here we define induction,
@@ -99,10 +99,10 @@ Defined.
 (* And then we check that the expected equations hold strictly. *)
 Notation convertible x y := (refl : Id x y).
 
-Check (fun n => convertible (N_rect (S n)) (ISS n (N_rect n))).
 Check (convertible (N_rect O) ISO).
+Check (fun n => convertible (N_rect (S n)) (ISS n (N_rect n))).
 
-Check (fun n => convertible (N_rect_ltac (S n)) (ISS n (N_rect_ltac n))).
 Check (convertible (N_rect_ltac O) ISO).
+Check (fun n => convertible (N_rect_ltac (S n)) (ISS n (N_rect_ltac n))).
 
 End induction.
