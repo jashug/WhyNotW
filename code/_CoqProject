@@ -1,3 +1,8 @@
 -Q . WhyNotW
+-arg -w -arg +all
+-arg -noinit
+-arg -indices-matter
+Prelude.v
 Nat.v
 General.v
+TestGeneral.v
