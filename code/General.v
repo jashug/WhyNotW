@@ -37,20 +37,20 @@ Code@{i} : Code@{j | i <= j} :=
 (* These codes describe functors: *)
 Fixpoint F@{j | i <= j} (A : Code) : Type@{j} → Type@{j} :=
   match A with
-  | nil => fun _ => unit
-  | nonind A B => fun X => Σ (a : A), F (B a) X
-  | inf_ind Ix B => fun X => (Ix → X) × F B X
-  | ind B => fun X => X × F B X
+  | nil => λ X ↦ unit
+  | nonind A B => λ X ↦ Σ (a : A), F (B a) X
+  | inf_ind Ix B => λ X ↦ (Ix → X) × F B X
+  | ind B => λ X ↦ X × F B X
   end.
 
 Fixpoint Fmap@{j1 j2}
   (A : Code) {X : Type@{j1}} {Y : Type@{j2}} (f : X → Y)
   : F@{j1} A X → F@{j2} A Y :=
   match A with
-  | nil => fun x => x
-  | nonind A B => fun x => (x.(fst); Fmap (B x.(fst)) f x.(snd))
-  | inf_ind Ix B => fun x => (f ∘ x.(fst); Fmap B f x.(snd))
-  | ind B => fun x => (f x.(fst); Fmap B f x.(snd))
+  | nil => λ x ↦ x
+  | nonind A B => λ x ↦ (x.(fst); Fmap (B x.(fst)) f x.(snd))
+  | inf_ind Ix B => λ x ↦ (f ∘ x.(fst); Fmap B f x.(snd))
+  | ind B => λ x ↦ (f x.(fst); Fmap B f x.(snd))
   end.
 
 (* Checking lawfulness is left to the reader *)
@@ -67,30 +67,30 @@ Fixpoint shapes (A : Code) : Type@{i} :=
 
 Fixpoint positions (A : Code) : shapes A → Type@{i} :=
   match A with
-  | nil => fun _ => 0
-  | nonind A B => fun x => positions (B x.(fst)) x.(snd)
-  | inf_ind Ix B => fun x => sum Ix (positions B x)
-  | ind B => fun x => option (positions B x)
+  | nil => λ x ↦ 0
+  | nonind A B => λ x ↦ positions (B x.(fst)) x.(snd)
+  | inf_ind Ix B => λ x ↦ Ix ⊔ positions B x
+  | ind B => λ x ↦ 1 ⊔ positions B x
   end.
 
 Fixpoint get_shape@{j} {A : Code} {X : Type@{j}} : F@{j} A X → shapes A :=
   match A return F A X → shapes A with
-  | nil => fun x => x
-  | nonind A B => fun x => (x.(fst); get_shape x.(snd))
-  | inf_ind Ix B => fun x => get_shape x.(snd)
-  | ind B => fun x => get_shape x.(snd)
+  | nil => λ x ↦ x
+  | nonind A B => λ x ↦ (x.(fst); get_shape x.(snd))
+  | inf_ind Ix B => λ x ↦ get_shape x.(snd)
+  | ind B => λ x ↦ get_shape x.(snd)
   end.
 
 Fixpoint get_f@{j} {A : Code} {X : Type@{j}} :
-  forall x : F@{j} A X, positions A (get_shape x) → X :=
+  ∀ x : F@{j} A X, positions A (get_shape x) → X :=
   match A with
-  | nil => fun _ xx => match xx with end
-  | nonind A B => fun x => get_f x.(snd)
-  | inf_ind Ix B => fun x p => match p with
+  | nil => λ _ xx ↦ match xx with end
+  | nonind A B => λ x ↦ get_f x.(snd)
+  | inf_ind Ix B => λ x p ↦ match p with
     | inl i => x.(fst) i
     | inr p => get_f x.(snd) p
     end
-  | ind B => fun x p => match p with
+  | ind B => λ x p ↦ match p with
     | None => x.(fst)
     | Some p => get_f x.(snd) p
     end
@@ -102,22 +102,21 @@ Definition get_W_arg@{j} {A : Code} {X : Type@{j}} (x : F@{j} A X) :
 
 (* These functors induce a refined notion of forall p : positions A s, P p *)
 Fixpoint All@{j} (A : Code) :
-  forall {s : shapes A} (P : positions A s → Type@{j}), Type@{j} :=
+  ∀ {s : shapes A} (P : positions A s → Type@{j}), Type@{j} :=
   match A with
-  | nil => fun _ _ => 1
-  | nonind A B => fun s P => All (B s.(fst)) P
-  | inf_ind Ix B => fun s P => (forall i, P (inl i)) × All B (P ∘ inr')
-  | ind B => fun s P => P None × All B (P ∘ Some')
+  | nil => λ _ _ ↦ 1
+  | nonind A B => λ s P ↦ All (B s.(fst)) P
+  | inf_ind Ix B => λ s P ↦ (∀ i, P (inl i)) × All B (P ∘ inr')
+  | ind B => λ s P ↦ P None × All B (P ∘ Some')
   end.
 
 Fixpoint All_in@{j} (A : Code) :
-  forall {s : shapes A} {P : positions A s → Type@{j}},
-  (forall p : positions A s, P p) → All@{j} A P :=
+  ∀ {s : shapes A} {P : positions A s → Type@{j}}, (∀ p, P p) → All@{j} A P :=
   match A with
-  | nil => fun s _ _ => s
-  | nonind A B => fun s P f => All_in (B s.(fst)) f
-  | inf_ind Ix B => fun s P f => (f ∘ inl'; All_in B (f ∘ inr'))
-  | ind B => fun s P f => (f None; All_in B (f ∘ Some'))
+  | nil => λ s _ _ ↦ s
+  | nonind A B => λ s P f ↦ All_in (B s.(fst)) f
+  | inf_ind Ix B => λ s P f ↦ (f ∘ inl'; All_in B (f ∘ inr'))
+  | ind B => λ s P f ↦ (f None; All_in B (f ∘ Some'))
   end.
 
 (* We can lift predicates over these functors: *)
@@ -152,14 +151,14 @@ Context
 .
 
 Fixpoint get_heredity {A : Code} :
-  forall (x : F A (Σ (x : X), C x)),
+  ∀ (x : F A (Σ (x : X), C x)),
   let x_fst := Fmap A fst x in
   All A (s := get_shape x_fst) (C ∘ get_f x_fst) :=
   match A with
-  | nil => fun x => x
-  | nonind A B => fun x => get_heredity x.(snd)
-  | inf_ind Ix B => fun x => (snd ∘ x.(fst); get_heredity x.(snd))
-  | ind B => fun x => (snd x.(fst); get_heredity x.(snd))
+  | nil => λ x ↦ x
+  | nonind A B => λ x ↦ get_heredity x.(snd)
+  | inf_ind Ix B => λ x ↦ (snd ∘ x.(fst); get_heredity x.(snd))
+  | ind B => λ x ↦ (snd x.(fst); get_heredity x.(snd))
   end.
 
 (* The pair (Fmap fst, get_heredity) is right-invertible *)
@@ -168,61 +167,61 @@ split_view A x hered is equivalent to
 Σ (xc : F A (Σ x, C)), Id (Fmap A fst xc; get_hereditary xc) (x; hered)
 *)
 Inductive split_view (A : Code) :
-  forall (x : F A X), All A (C ∘ get_f x) → Type@{i} :=
+  ∀ (x : F A X), All A (C ∘ get_f x) → Type@{i} :=
   | split_view_refl (x : F A (Σ (x : X), C x)) :
     split_view A (Fmap A fst x) (get_heredity x)
 .
 Definition split_view_cover_nonind A B x hered :
   split_view (B x.(fst)) x.(snd) hered → split_view (nonind A B) x hered :=
-  fun cover => match cover in split_view _ x_snd hered
+  λ cover ↦ match cover in split_view _ x_snd hered
   return split_view (nonind A B) (x.(fst); x_snd) hered
   with split_view_refl _ xc =>
     split_view_refl (nonind A B) (x.(fst); xc)
   end.
 Definition split_view_cover_inf_ind Ix B x hered :
   split_view B x.(snd) hered.(snd) → split_view (inf_ind Ix B) x hered :=
-  fun cover => match cover in split_view _ x_snd hered_snd
+  λ cover ↦ match cover in split_view _ x_snd hered_snd
   return split_view (inf_ind Ix B) (x.(fst); x_snd) (hered.(fst); hered_snd)
   with split_view_refl _ xc =>
-    split_view_refl (inf_ind Ix B) (fun i => (x.(fst) i; hered.(fst) i); xc)
+    split_view_refl (inf_ind Ix B) (λ i ↦ (x.(fst) i; hered.(fst) i); xc)
   end.
 Definition split_view_cover_ind B x hered :
   split_view B x.(snd) hered.(snd) → split_view (ind B) x hered :=
-  fun cover => match cover in split_view _ x_snd hered_snd
+  λ cover ↦ match cover in split_view _ x_snd hered_snd
   return split_view (ind B) (x.(fst); x_snd) (hered.(fst); hered_snd)
   with split_view_refl _ xc =>
     split_view_refl (ind B) ((x.(fst); hered.(fst)); xc)
   end.
 Fixpoint split_view_cover (A : Code) :
-  forall x hered, split_view A x hered :=
-  match A return forall x hered, split_view A x hered with
-  | nil => fun 'tt 'tt => split_view_refl nil tt
-  | nonind A B => fun x hered =>
+  ∀ x hered, split_view A x hered :=
+  match A with
+  | nil => λ 'tt 'tt ↦ split_view_refl nil tt
+  | nonind A B => λ x hered ↦
     split_view_cover_nonind A B _ _ (split_view_cover (B x.(fst)) x.(snd) hered)
-  | inf_ind Ix B => fun x hered =>
+  | inf_ind Ix B => λ x hered ↦
     split_view_cover_inf_ind Ix B _ _ (split_view_cover B x.(snd) hered.(snd))
-  | ind B => fun x hered =>
+  | ind B => λ x hered ↦
     split_view_cover_ind B _ _ (split_view_cover B x.(snd) hered.(snd))
   end.
 (* And the fibers are in fact contractible *)
 Fixpoint split_view_isContr A :
-  forall x hered other, Id other (split_view_cover A x hered) :=
-  match A return forall x hered other, Id other (split_view_cover A x hered) with
-  | nil => fun x hered '(split_view_refl _ tt) => refl
-  | nonind A B => fun x hered '(split_view_refl _ xc) =>
+  ∀ x hered other, Id other (split_view_cover A x hered) :=
+  match A with
+  | nil => λ x hered '(split_view_refl _ tt) ↦ refl
+  | nonind A B => λ x hered '(split_view_refl _ xc) ↦
     cong (split_view_cover_nonind A B (Fmap _ fst xc) (get_heredity xc))
     (split_view_isContr _ _ _ (split_view_refl _ xc.(snd)))
-  | inf_ind Ix B => fun x hered '(split_view_refl _ xc) =>
+  | inf_ind Ix B => λ x hered '(split_view_refl _ xc) ↦
     cong (split_view_cover_inf_ind Ix B (Fmap _ fst xc) (get_heredity xc))
     (split_view_isContr _ _ _ (split_view_refl _ xc.(snd)))
-  | ind B => fun x hered '(split_view_refl _ xc) =>
+  | ind B => λ x hered '(split_view_refl _ xc) ↦
     cong (split_view_cover_ind B (Fmap _ fst xc) (get_heredity xc))
     (split_view_isContr _ _ _ (split_view_refl _ xc.(snd)))
   end.
 End split.
 
 Definition intro (A : Code) : F@{i} A (El A) → El A :=
-  fun x => let pre_x := Fmap A fst x in
+  λ x ↦ let pre_x := Fmap A fst x in
   (sup (get_shape pre_x) (get_f pre_x); get_heredity x; pre_x; refl).
 
 (* Now for induction *)
@@ -232,57 +231,57 @@ Universe j.
 Context
   (A : Code)
   (P : El A → Type@{j})
-  (IS : forall (x : F A (El A)), liftP@{i j} A P x → P (intro A x))
+  (IS : ∀ (x : F A (El A)), liftP@{i j} A P x → P (intro A x))
 .
 
 Fixpoint build_IH@{} (A' : Code) :
-  forall x (IH : forall p c, P (get_f (Fmap A' fst x) p; c)),
+  ∀ x (IH : ∀ p c, P (get_f (Fmap A' fst x) p; c)),
   All@{j} A' (P ∘ get_f x) :=
   match A' with
-  | nil => fun x IH => x
-  | nonind A B => fun x IH => build_IH (B x.(fst)) x.(snd) IH
-  | inf_ind Ix B => fun x IH =>
-    (fun i => IH (inl i) (x.(fst) i).(snd); build_IH B x.(snd) (IH ∘ inr'))
-  | ind B => fun x IH =>
+  | nil => λ x IH ↦ x
+  | nonind A B => λ x IH ↦ build_IH (B x.(fst)) x.(snd) IH
+  | inf_ind Ix B => λ x IH ↦
+    (λ i ↦ IH (inl i) (x.(fst) i).(snd); build_IH B x.(snd) (IH ∘ inr'))
+  | ind B => λ x IH ↦
     (IH None x.(fst).(snd); build_IH B x.(snd) (IH ∘ Some'))
   end.
 
-Fixpoint build_IH_eq@{} (A' : Code) (el : forall x, P x) :
-  forall x,
-  Id (build_IH A' x (fun p c => el _)) (All_in A' (fun p => el _)) :=
+Fixpoint build_IH_eq@{} (A' : Code) (el : ∀ x, P x) :
+  ∀ x,
+  Id (build_IH A' x (λ p c ↦ el _)) (All_in A' (λ p ↦ el _)) :=
   match A' with
-  | nil => fun x => refl
-  | nonind A B => fun x => build_IH_eq (B x.(fst)) el x.(snd)
-  | inf_ind Ix B => fun x =>
+  | nil => λ x ↦ refl
+  | nonind A B => λ x ↦ build_IH_eq (B x.(fst)) el x.(snd)
+  | inf_ind Ix B => λ x ↦
     cong (pair (el ∘ x.(fst))) (build_IH_eq B el x.(snd))
-  | ind B => fun x =>
+  | ind B => λ x ↦
     cong (pair (el x.(fst))) (build_IH_eq B el x.(snd))
   end.
 
 Definition rec_helper@{} t (hered : All A (canonical A ∘ _))
-  (IH : forall p c, P (get_f t p; c)) :
+  (IH : ∀ p c, P (get_f t p; c)) :
   split_view A t hered → P (sup _ _; hered; t; refl) :=
-  fun cover => match cover with split_view_refl _ x => fun IH =>
+  fun cover => match cover with split_view_refl _ x => λ IH ↦
     IS x (build_IH A x IH)
   end IH.
-Definition rec@{} : forall x, P x :=
-  let fix rec (x : preEl A) : forall c, P (x; c) := match x with
-    | sup s f => fun '((hered; t; eq) : canonical A (sup s f)) =>
-      match eq as eq in Id _ (s; f)
+Definition rec@{} : ∀ x, P x :=
+  let fix rec (x : preEl A) : ∀ c, P (x; c) := match x with
+    | sup s f => λ '((hered; t; eq) : canonical A (sup s f)) ↦
+      match eq in Id _ (s; f)
       return
-        forall hered : All A (canonical A ∘ f),
-        (forall p c, P (f p; c)) →
+        ∀ hered : All A (canonical A ∘ f),
+        (∀ p c, P (f p; c)) →
         P (sup s f; hered; t; eq)
-      with refl => fun hered IH =>
+      with refl => λ hered IH ↦
         rec_helper t hered IH (split_view_cover A t hered)
-      end hered (fun p => rec (f p))
+      end hered (λ p ↦ rec (f p))
     end in
-  fun x => rec x.(fst) x.(snd).
+  λ x ↦ rec x.(fst) x.(snd).
 
 Definition rec_eq@{} x
   : Id (rec (intro A x)) (IS x (All_in A (rec ∘ get_f x))) :=
   v_trans
-  (cong (rec_helper _ _ (fun p c => rec _))
+  (cong (rec_helper _ _ (λ p c ↦ rec _))
    (split_view_isContr A _ _ (split_view_refl A x)))
   (cong (IS x) (build_IH_eq A rec x)).
 

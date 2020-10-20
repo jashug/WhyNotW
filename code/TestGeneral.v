@@ -16,7 +16,7 @@ Notation OO := false.
 Notation SS := true.
 
 Definition nat_code : Code@{Set} :=
-  nonind 2 (fun b => match b with OO => nil | SS => ind nil end).
+  nonind 2 λ b ↦ match b with OO => nil | SS => ind nil end.
 
 Definition nat := El nat_code.
 Definition O := intro nat_code [OO].
@@ -27,12 +27,12 @@ Universe j.
 Context
   (P : nat → Type@{j})
   (ISO : P O)
-  (ISS : forall n, P n → P (S n))
+  (ISS : ∀ n, P n → P (S n))
 .
 Definition IS arg : liftP@{Set Set j} nat_code P arg → P (intro nat_code arg) :=
   match arg with
-  | [OO] => fun '[] => ISO
-  | [SS; n] => fun '[IH] => ISS n IH
+  | [OO] => λ '[] ↦ ISO
+  | [SS; n] => λ '[IH] ↦ ISS n IH
   end.
 Definition nat_rect : ∀ n, P n := rec nat_code P IS.
 
@@ -70,12 +70,12 @@ Notation inf_ind' := (true; false).
 Notation ind' := (true; true).
 
 Definition Code_code : Code@{i'} :=
-  nonind (2 × 2) (fun tag => match tag with
+  nonind (2 × 2) λ tag ↦ match tag with
     | nil' => nil
-    | nonind' => nonind Type@{i} (fun A => inf_ind A nil)
-    | inf_ind' => nonind Type@{i} (fun Ix => ind nil)
+    | nonind' => nonind Type@{i} λ A ↦ inf_ind A nil
+    | inf_ind' => nonind Type@{i} λ Ix ↦ ind nil
     | ind' => ind nil
-    end).
+    end.
 
 (* Note that Code@{i} is in Type@{i+1}. *)
 Definition Code_ : Type@{i'} := El Code_code.
@@ -99,10 +99,10 @@ Context
 
 Definition IS arg : liftP@{i' i' j} Code_code P arg → P (intro Code_code arg) :=
   match arg with
-  | [nil'] => fun '[] => IS_nil
-  | [nonind'; A; B] => fun '[IH] => IS_nonind A B IH
-  | [inf_ind'; A; B] => fun '[IH] => IS_inf_ind A B IH
-  | [ind'; B] => fun '[IH] => IS_ind B IH
+  | [nil'] => λ '[] ↦ IS_nil
+  | [nonind'; A; B] => λ '[IH] ↦ IS_nonind A B IH
+  | [inf_ind'; A; B] => λ '[IH] ↦ IS_inf_ind A B IH
+  | [ind'; B] => λ '[IH] ↦ IS_ind B IH
   end.
 Definition Code_rect : ∀ A, P A := rec Code_code P IS.
 
@@ -114,7 +114,7 @@ Definition test_eq_nonind A B := convertible
   (rec_eq Code_code P IS [nonind'; A; B])
   (convertible
    (Code_rect (nonind_ A B))
-   (IS_nonind A B (fun a => Code_rect (B a)))).
+   (IS_nonind A B (Code_rect ∘ B))).
 Definition test_eq_inf_ind A B := convertible
   (rec_eq Code_code P IS [inf_ind'; A; B])
   (convertible (Code_rect (inf_ind_ A B)) (IS_inf_ind A B (Code_rect B))).
@@ -137,10 +137,10 @@ Notation nil' := false.
 Notation cons' := true.
 
 Definition list_code : Code@{i} :=
-  nonind 2 (fun b => match b with
+  nonind 2 λ b ↦ match b with
     | nil' => nil
-    | cons' => nonind A (fun a => ind nil)
-    end).
+    | cons' => nonind A λ a ↦ ind nil
+    end.
 
 Definition list : Type@{i} := El list_code.
 Definition nil : list := intro list_code [nil'].
@@ -156,8 +156,8 @@ Context
 
 Definition IS arg : liftP@{i i j} list_code P arg → P (intro list_code arg) :=
   match arg with
-  | [nil'] => fun '[] => IS_nil
-  | [cons'; a; l] => fun '[IH] => IS_cons a l IH
+  | [nil'] => λ '[] ↦ IS_nil
+  | [cons'; a; l] => λ '[IH] ↦ IS_cons a l IH
   end.
 Definition list_rect : ∀ l, P l := rec list_code P IS.
 

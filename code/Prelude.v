@@ -32,8 +32,11 @@ Notation "A -> B" := (forall (_ : A), B) : type_scope.
 Notation "A → B" := (A -> B)
   (at level 99, right associativity, B at level 200) : type_scope.
 
+Notation "'λ' x .. y ↦ z" := (fun x => .. (fun y => z) ..)
+  (at level 8, x binder, y binder, z at level 200, right associativity) : core_scope.
+
 (** composition of functions *)
-Notation "f ∘ g" := (fun x => f (g x))
+Notation "f ∘ g" := (λ x ↦ f (g x))
   (at level 40, left associativity) : core_scope.
 
 (** * Finite types *)
@@ -61,21 +64,21 @@ Notation "x .1" := (x.(fst))
 Notation "x .2" := (x.(snd))
   (at level 1, left associativity, format "x .2") : core_scope.
 
-Notation "∃ x .. y , P" := (prod _ (fun x => .. (prod _ (fun y => P)) ..))
+Notation "∃ x .. y , P" := (prod _ (λ x ↦ .. (prod _ (λ y ↦ P)) ..))
   (at level 200, x binder, y binder, right associativity,
    format "'[  ' '[  ' ∃  x  ..  y ']' ,  '/' P ']'")
   : type_scope.
-Notation "'Σ' x .. y , P" := (prod _ (fun x => .. (prod _ (fun y => P)) ..))
+Notation "'Σ' x .. y , P" := (prod _ (λ x ↦ .. (prod _ (λ y ↦ P)) ..))
   (at level 200, x binder, y binder, right associativity,
    format "'[  ' '[  ' Σ  x  ..  y ']' ,  '/' P ']'")
   : type_scope.
 Notation "( x , .. , y , z )" := (pair x .. (pair y z) ..) : core_scope.
 Notation "( x ; .. ; y ; z )" := (pair x .. (pair y z) ..) : core_scope.
 
-Notation "A * B" := (prod A (fun _ => B))  : type_scope.
-Notation "A ∧ B" := (prod A (fun _ => B))
+Notation "A * B" := (prod A (λ _ ↦ B))  : type_scope.
+Notation "A ∧ B" := (prod A (λ _ ↦ B))
   (at level 80, right associativity) : type_scope.
-Notation "A × B" := (prod A (fun _ => B))
+Notation "A × B" := (prod A (λ _ ↦ B))
   (at level 80, right associativity) : type_scope.
 
 (* tuple notation *)
@@ -112,8 +115,8 @@ Definition sum@{i} (A B : Type@{i}) : Type@{i} :=
   Σ (b : 2), match b with false => A | true => B end.
 Notation inl a := (false; a).
 Notation inr b := (true; b).
-Notation inl' := (fun a => inl a).
-Notation inr' := (fun b => inr b).
+Notation inl' := (λ a ↦ inl a).
+Notation inr' := (λ b ↦ inr b).
 
 Notation "A + B" := (sum A B) : type_scope.
 Notation "A ∨ B" := (sum A B) (at level 85, right associativity) : type_scope.
@@ -123,7 +126,7 @@ Notation "A ⊔ B" := (sum A B) (at level 85, right associativity) : type_scope.
 Definition option@{i} (A : Type@{i}) : Type@{i} := sum 1 A.
 Notation None := (inl ★).
 Notation Some a := (inr a).
-Notation Some' := (fun a => Some a).
+Notation Some' := (λ a ↦ Some a).
 
 (** Notation for tests *)
 Notation convertible x y := (refl : Id x y).
