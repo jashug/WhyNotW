@@ -33,7 +33,12 @@ Notation "A → B" := (A -> B)
   (at level 99, right associativity, B at level 200) : type_scope.
 
 Notation "'λ' x .. y ↦ z" := (fun x => .. (fun y => z) ..)
-  (at level 8, x binder, y binder, z at level 200, right associativity) : core_scope.
+  (at level 8, x binder, y binder, z at level 200, right associativity)
+  : core_scope.
+Notation "'λ' x ↦ y" := (fun x => y)
+  (* Hack to mostly hide types of function binders in printing. *)
+  (at level 0, x ident, y at level 200, right associativity, only printing)
+  : core_scope.
 
 (** composition of functions *)
 Notation "f ∘ g" := (λ x ↦ f (g x))
@@ -51,6 +56,18 @@ Notation "★" := tt : core_scope.
 
 Inductive bool : Set := true | false.
 Notation "2" := bool : type_scope.
+
+Notation "( b ? x || y )" :=
+  match b as b' return _ with true => x | false => y end
+  (only printing) : core_scope.
+Notation "( b ? x || y )" :=
+  match b with true => x | false => y end
+  : core_scope.
+
+Notation "! x" := match x with end
+  (at level 35, x constr, right associativity, only printing) : core_scope.
+Notation "! x" := match x as x' return _ with end
+  (at level 35, right associativity) : core_scope.
 
 (** * Dependent pairs *)
 Record prod@{i} (A : Type@{i}) (B : A → Type@{i}) : Type@{i} :=
@@ -111,8 +128,8 @@ Definition v_trans@{i} {A : Type@{i}} {x y z : A}
 (** * Sum types *)
 (** We define sum types from bool and Σ *)
 
-Definition sum@{i} (A B : Type@{i}) : Type@{i} :=
-  Σ (b : 2), match b with false => A | true => B end.
+Notation sum A B :=
+  (Σ (b : 2), match b with false => A | true => B end).
 Notation inl a := (false; a).
 Notation inr b := (true; b).
 Notation inl' := (λ a ↦ inl a).

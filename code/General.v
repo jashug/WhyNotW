@@ -11,6 +11,9 @@ Deviating from the paper, we split infinitary and non-infinitary inductive
 arguments to compensate for the lack of strict eta for unit
 (without which we don't have (unit → X) equivalent to X).
 
+We include the choice constructor to avoid getting stuck trying to recurse
+under pattern matching on constructor labels.
+
 Another option would be to take a whole telescope, which would be more uniform
 and perhaps more friendly to users.
 Since we have strict eta for pairs, that is however overkill,
@@ -21,16 +24,20 @@ Inductive Code :=
   | nonind (A : Type@{i}) (B : A → Code)
   | inf_ind (Ix : Type@{i}) (B : Code)
   | ind (B : Code) (* morally ind B = inf_ind 1 B *)
+  | choice (A B : Code)
+    (* morally choice A B =
+       nonind 2 (λ b ↦ match b with false => A | true => B end) *)
 .
 (* Note that Code@{i} has itself a code in Code@{j | i <= j}:
 Code@{i} : Code@{j | i <= j} :=
   nonind ("nil" + "nonind" (A : Type@{i}) +
-          "inf_ind" (Ix : Type@{i}) + "ind") (fun label =>
+          "inf_ind" (Ix : Type@{i}) + "ind" + "choice") (fun label =>
     match label with
     | "nil" => nil
     | "nonind" A => inf_ind A nil
     | "inf_ind" Ix => ind nil
     | "ind" => ind nil
+    | "choice" => ind (ind nil)
     end)
 *)
 
@@ -41,6 +48,7 @@ Fixpoint F@{j | i <= j} (A : Code) : Type@{j} → Type@{j} :=
   | nonind A B => λ X ↦ Σ (a : A), F (B a) X
   | inf_ind Ix B => λ X ↦ (Ix → X) × F B X
   | ind B => λ X ↦ X × F B X
+  | choice A B => λ X ↦ F A X ⊔ F B X
   end.
 
 Fixpoint Fmap@{j1 j2}
@@ -51,6 +59,10 @@ Fixpoint Fmap@{j1 j2}
   | nonind A B => λ x ↦ (x.(fst); Fmap (B x.(fst)) f x.(snd))
   | inf_ind Ix B => λ x ↦ (f ∘ x.(fst); Fmap B f x.(snd))
   | ind B => λ x ↦ (f x.(fst); Fmap B f x.(snd))
+  | choice A B => λ x ↦ match x with
+    | inl a => inl (Fmap A f a)
+    | inr b => inr (Fmap B f b)
+    end
   end.
 
 (* Checking lawfulness is left to the reader *)
@@ -63,6 +75,7 @@ Fixpoint shapes (A : Code) : Type@{i} :=
   | nonind A B => Σ (a : A), shapes (B a)
   | inf_ind Ix B => shapes B
   | ind B => shapes B
+  | choice A B => shapes A ⊔ shapes B
   end.
 
 Fixpoint positions (A : Code) : shapes A → Type@{i} :=
@@ -71,6 +84,10 @@ Fixpoint positions (A : Code) : shapes A → Type@{i} :=
   | nonind A B => λ x ↦ positions (B x.(fst)) x.(snd)
   | inf_ind Ix B => λ x ↦ Ix ⊔ positions B x
   | ind B => λ x ↦ 1 ⊔ positions B x
+  | choice A B => λ x ↦ match x with
+    | inl a => positions A a
+    | inr b => positions B b
+    end
   end.
 
 Fixpoint get_shape@{j} {A : Code} {X : Type@{j}} : F@{j} A X → shapes A :=
@@ -79,6 +96,10 @@ Fixpoint get_shape@{j} {A : Code} {X : Type@{j}} : F@{j} A X → shapes A :=
   | nonind A B => λ x ↦ (x.(fst); get_shape x.(snd))
   | inf_ind Ix B => λ x ↦ get_shape x.(snd)
   | ind B => λ x ↦ get_shape x.(snd)
+  | choice A B => λ x ↦ match x with
+    | inl a => inl (get_shape a)
+    | inr b => inr (get_shape b)
+    end
   end.
 
 Fixpoint get_f@{j} {A : Code} {X : Type@{j}} :
@@ -94,6 +115,10 @@ Fixpoint get_f@{j} {A : Code} {X : Type@{j}} :
     | None => x.(fst)
     | Some p => get_f x.(snd) p
     end
+  | choice A B => λ x ↦ match x with
+    | inl a => get_f a
+    | inr b => get_f b
+    end
   end.
 
 Definition get_W_arg@{j} {A : Code} {X : Type@{j}} (x : F@{j} A X) :
@@ -108,6 +133,10 @@ Fixpoint All@{j} (A : Code) :
   | nonind A B => λ s P ↦ All (B s.(fst)) P
   | inf_ind Ix B => λ s P ↦ (∀ i, P (inl i)) × All B (P ∘ inr')
   | ind B => λ s P ↦ P None × All B (P ∘ Some')
+  | choice A B => λ s ↦ match s with
+    | inl a => All A (s := a)
+    | inr b => All B (s := b)
+    end
   end.
 
 Fixpoint All_in@{j} (A : Code) :
@@ -117,6 +146,10 @@ Fixpoint All_in@{j} (A : Code) :
   | nonind A B => λ s P f ↦ All_in (B s.(fst)) f
   | inf_ind Ix B => λ s P f ↦ (f ∘ inl'; All_in B (f ∘ inr'))
   | ind B => λ s P f ↦ (f None; All_in B (f ∘ Some'))
+  | choice A B => λ s ↦ match s with
+    | inl a => λ P f ↦ All_in A (s := a) f
+    | inr b => λ P f ↦ All_in B (s := b) f
+    end
   end.
 
 (* We can lift predicates over these functors: *)
@@ -131,10 +164,10 @@ Then we define the canonical predicate.
 A term is canonical if its subterms are canonical
 and (s; f) is in the image of get_W_arg.
 *)
-Fixpoint canonical@{} (A : Code) (x : preEl A) : Type@{i} :=
-  match x with
+Definition canonical@{} (A : Code) : preEl A → Type@{i} :=
+  fix canonical x := match x with
   | sup s f =>
-    All A (canonical A ∘ f) ×
+    All A (canonical ∘ f) ×
     Σ (t : F A (preEl A)), Id (get_W_arg t) (s; f)
   end.
 
@@ -159,6 +192,10 @@ Fixpoint get_heredity {A : Code} :
   | nonind A B => λ x ↦ get_heredity x.(snd)
   | inf_ind Ix B => λ x ↦ (snd ∘ x.(fst); get_heredity x.(snd))
   | ind B => λ x ↦ (snd x.(fst); get_heredity x.(snd))
+  | choice A B => λ x ↦ match x with
+    | inl a => get_heredity a
+    | inr b => get_heredity b
+    end
   end.
 
 (* The pair (Fmap fst, get_heredity) is right-invertible *)
@@ -192,6 +229,16 @@ Definition split_view_cover_ind B x hered :
   with split_view_refl _ xc =>
     split_view_refl (ind B) ((x.(fst); hered.(fst)); xc)
   end.
+Definition split_view_cover_choice_l A B a hered :
+  split_view A a hered → split_view (choice A B) (inl a) hered :=
+  λ cover ↦ match cover with split_view_refl _ xc =>
+    split_view_refl (choice A B) (inl xc)
+  end.
+Definition split_view_cover_choice_r A B b hered :
+  split_view B b hered → split_view (choice A B) (inr b) hered :=
+  λ cover ↦ match cover with split_view_refl _ xc =>
+    split_view_refl (choice A B) (inr xc)
+  end.
 Fixpoint split_view_cover (A : Code) :
   ∀ x hered, split_view A x hered :=
   match A with
@@ -202,6 +249,12 @@ Fixpoint split_view_cover (A : Code) :
     split_view_cover_inf_ind Ix B _ _ (split_view_cover B x.(snd) hered.(snd))
   | ind B => λ x hered ↦
     split_view_cover_ind B _ _ (split_view_cover B x.(snd) hered.(snd))
+  | choice A B => λ x ↦ match x with
+    | inl a => λ hered ↦
+      split_view_cover_choice_l A B _ _ (split_view_cover A a hered)
+    | inr b => λ hered ↦
+      split_view_cover_choice_r A B _ _ (split_view_cover B b hered)
+    end
   end.
 (* And the fibers are in fact contractible *)
 Fixpoint split_view_isContr A :
@@ -217,6 +270,14 @@ Fixpoint split_view_isContr A :
   | ind B => λ x hered '(split_view_refl _ xc) ↦
     cong (split_view_cover_ind B (Fmap _ fst xc) (get_heredity xc))
     (split_view_isContr _ _ _ (split_view_refl _ xc.(snd)))
+  | choice A B => λ x  hered '(split_view_refl _ xc) ↦ match xc with
+    | inl a =>
+      cong (split_view_cover_choice_l A B (Fmap _ fst a) (get_heredity a))
+      (split_view_isContr _ _ _ (split_view_refl _ a))
+    | inr b =>
+      cong (split_view_cover_choice_r A B (Fmap _ fst b) (get_heredity b))
+      (split_view_isContr _ _ _ (split_view_refl _ b))
+    end
   end.
 End split.
 
@@ -235,7 +296,7 @@ Context
 .
 
 Fixpoint build_IH@{} (A' : Code) :
-  ∀ x (IH : ∀ p c, P (get_f (Fmap A' fst x) p; c)),
+  ∀ x (IH : ∀ p c, P (get_f (Fmap@{i i} A' fst x) p; c)),
   All@{j} A' (P ∘ get_f x) :=
   match A' with
   | nil => λ x IH ↦ x
@@ -244,6 +305,10 @@ Fixpoint build_IH@{} (A' : Code) :
     (λ i ↦ IH (inl i) (x.(fst) i).(snd); build_IH B x.(snd) (IH ∘ inr'))
   | ind B => λ x IH ↦
     (IH None x.(fst).(snd); build_IH B x.(snd) (IH ∘ Some'))
+  | choice A B => λ x ↦ match x with
+    | inl a => build_IH A a
+    | inr b => build_IH B b
+    end
   end.
 
 Fixpoint build_IH_eq@{} (A' : Code) (el : ∀ x, P x) :
@@ -256,6 +321,10 @@ Fixpoint build_IH_eq@{} (A' : Code) (el : ∀ x, P x) :
     cong (pair (el ∘ x.(fst))) (build_IH_eq B el x.(snd))
   | ind B => λ x ↦
     cong (pair (el x.(fst))) (build_IH_eq B el x.(snd))
+  | choice A B => λ x ↦ match x with
+    | inl a => build_IH_eq A el a
+    | inr b => build_IH_eq B el b
+    end
   end.
 
 Definition rec_helper@{} t (hered : All A (canonical A ∘ _))
