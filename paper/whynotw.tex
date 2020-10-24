@@ -337,18 +337,16 @@ With this adjustment, the structure of the code is not hidden inside $\case$, an
 \section{Discussion}
 
 \subsection{Composition}
-Being codes for functors, one may ask if $\Code_i$ is closed under composition of functors? As with the codes for inductive-recursive types we have modified, without function extensionality we do not appear to have composition for the same reasons as considered in \cite{variations-IR}. Indeed, experiments suggest that the general construction of a class of inductive types closed under composition of the underlying functors essentially requires function extensionality. Even worse, to get definitional computation rules for the resulting inductive types, all our attempts have required that transporting over $\funext(x\mapsto \refl)$ computes to the identity, a property which not even cubical type theory \cite{cchm-cubical} satisfies (it is satisfied, however, by observational type theory \cite{ott}). Thus, we do not know how to combine a class of inductive types closed under composition constructed from the $W$ type as we have in \cref{general-case} with the the principle of Univalence \cite{hott-book} while maintaining good computational behavior.
+Being codes for functors, one may ask if $\Code_i$ is closed under composition of functors? As with the codes for inductive-recursive types we have modified, without function extensionality we do not appear to have composition (for similar reasons as considered in \cite{variations-IR}). Indeed, experiments suggest that the general construction of a class of inductive types closed under composition of the underlying functors essentially requires function extensionality. Even worse, to get definitional computation rules for the resulting inductive types, all our attempts have required that transporting over $\funext(x\mapsto \refl)$ computes to the identity, a property which not even cubical type theory \cite{cchm-cubical} satisfies (it is satisfied, however, by observational type theory \cite{observational-type-theory}). Thus, we do not know how to combine a class of inductive types closed under composition constructed from the $W$ type as we have in \cref{general-case} with the the principle of Univalence \cite{hott-book} while maintaining good computational behavior.
 
 We do however wish to emphasize that the construction in \cref{general-case} (which is not closed under composition) is completely compatible with Univalence, and could be implemented in cubical type theory as long as an identity type with strict $\beta$ rule is used.
 
 \subsection{Problems}
-Why not just use this construction as the foundation for inductive types in a proof assistant? While we have shown bare possibility, this is not an obviously superior solution when compared to the inductive schemes present in proof assistants today.
+What are the problems with using this construction as the foundation for inductive types in a proof assistant? While we have shown bare possibility, this is not an obviously superior solution when compared to the inductive schemes present in proof assistants today.
 
 The construction is complex, which has the possibility of confusing unification and other elaboration algorithms. While the reduction behavior simulates the expected such, the reduction engine has to make many steps to simulate one step of a primitive inductive type; even if there is no asymptotic slowdown a reasonably large constant factor slowdown may be expected.
 
-This construction is also limited in it's expressivity. Nested inductive types such as $\mathtt{Inductive}\;\mathtt{tree} := \mathtt{node} : \mathtt{list}\;\mathtt{tree} \to \mathtt{tree}$ do not appear to be constructible, nor do mutual inductive types landing in a mixture of impredicative and predicative sorts at different levels, much less inductive-inductive types.
-
-Just because something can be done doesn't necessarily mean it should.
+This construction is also limited in it's expressivity. Nested inductive types such as $\mathtt{Inductive}\;\mathtt{tree} := \mathtt{node} : \mathtt{list}\;\mathtt{tree} \to \mathtt{tree}$ do not appear to be constructible, nor do mutual inductive types landing in a mixture of impredicative and predicative sorts at different levels, and nor do inductive-inductive types.
 
 \subsection{Conclusion}
 
