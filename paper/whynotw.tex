@@ -29,7 +29,7 @@
 
 \supplement{\url{https://github.com/jashug/WhyNotW}}
 
-% \acknowledgements{I want to thank \dots}%optional
+\acknowledgements{I want to thank Jon Sterling for his helpful feedback on a draft of this paper.}
 
 %\nolinenumbers %uncomment to disable line numbering
 
@@ -53,15 +53,16 @@
 %\floatstyle{boxed} 
 %\restylefloat{figure}
 
-\newcommand{\zero}{0}
-\newcommand{\one}{1}
-\newcommand{\bool}{2}
+\newcommand{\zero}{\mathtt{0}}
+\newcommand{\one}{\mathtt{1}}
+\newcommand{\bool}{\mathtt{2}}
 \newcommand{\true}{\mathtt{tt}}
 \newcommand{\false}{\mathtt{ff}}
 \newcommand{\codeO}{\mathtt{\hat{O}}}
 \newcommand{\codeS}{\mathtt{\hat{S}}}
+\newcommand{\U}{\mathtt{U}}
 
-\DeclareMathOperator{\supop}{sup}
+\DeclareMathOperator{\supop}{\mathtt{sup}}
 \renewcommand{\sup}[2]{\supop {#1}\:\!{#2}}
 
 \newcommand{\N}{\hyperref[define-N]{\mathbb{N}}}
@@ -72,7 +73,9 @@
 
 %\newcommand{\casepath}[4]{\case {#1};\mathtt{inl}\;\Id{\mathunderscore}{#2}\;\mathtt{return}\;{#3}\;\mathtt{of}\;\{\refl\mapsto{#4}\}}
 
-\DeclareMathOperator{\Idop}{\mathrm{Id}}
+\DeclareMathOperator{\W}{\mathtt{W}}
+
+\DeclareMathOperator{\Idop}{\mathtt{Id}}
 \newcommand{\Id}[2]{\Idop {#1}\;{#2}}
 \newcommand{\IdA}[3]{\Idop_{#1}{#2}\;{#3}}
 \newcommand{\refl}{\mathtt{refl}}
@@ -119,19 +122,23 @@
 \maketitle
 
 \begin{abstract}
-In an extensional setting, $W$ types are sufficient to construct a broad class of inductive types, but in intentional type theory the standard construction of even the natural numbers does not satisfy the required induction principle. In this paper, we show how to refine the standard construction of inductive types such that the induction principle is provable and computes as expected in intensional type theory without using function extensionality.
+In an extensional setting, $\W$ types are sufficient to construct a broad class of inductive types, but in intensional type theory the standard construction of even the natural numbers does not satisfy the required induction principle. In this paper, we show how to refine the standard construction of inductive types such that the induction principle is provable and computes as expected in intensional type theory without using function extensionality.
 \end{abstract}
 
 \section{Introduction}
 
-In intensional type theory with only type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $W$, $\Idop$ and $U$, can the natural numbers be constructed?
+In intensional type theory with only type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $\W$, $\Idop$ and $\U$, can the natural numbers be constructed?
 
-The $W$ type \cite{mltt} captures the essence of induction, and in extensional type theory it is straightforward to construct familiar inductive types out of it, including the natural numbers \cite{dybjer-W-encodes-inductive}.
-Taking the elements of the two-element type $\bool$ to be $\codeO$ and $\codeS$, we define \begin{equation}\label{define-preN}\preN = W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}).\end{equation}
-However, as is well known \cite{dybjer-W-encodes-inductive,luo-wellordering,mcbride_wtypes,programming-in-MLTT}, in intensional type theory we cannot prove the induction principle for $\preN$ without function extensionality. The obstacle is in the $\codeO$ case, where we end up needing to prove $P\;f$ for an arbitrary $f : \zero \to \preN$, when we only know $P\;(x\mapsto\caset{x}{})$.
+The $\W$ type \cite{mltt} captures the essence of induction, and in extensional type theory it is straightforward to construct familiar inductive types out of it, including the natural numbers \cite{dybjer-W-encodes-inductive}.
+Taking the elements of the two-element type $\bool$ to be $\codeO$ and $\codeS$, we define \begin{equation}\label{define-preN}\preN = \W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}).\end{equation}
+(the tilde distinguishes the standard construction from our refined construction of the natural numbers in \cref{construct-N})
+
+However, as is well known \cite{dybjer-W-encodes-inductive,luo-wellordering,mcbride_wtypes,programming-in-MLTT}, in intensional type theory we cannot prove the induction principle for $\preN$ without function extensionality.
+The obstacle is in the $\codeO$ case, where we end up needing to prove $P\;f$ for an arbitrary $f : \zero \to \preN$, when we only know $P\;(x\mapsto\caset{x}{})$.
 
 Can this obstacle be avoided?
-The answer turns out to be yes; in this paper, we show that refining the standard construction allows the natural numbers and many other inductive types to be constructed from $W$ in intensional type theory.
+The answer turns out to be yes; in this paper, we show that refining the standard construction allows the natural numbers and many other inductive types to be constructed from $\W$ in intensional type theory.
+\footnote{These results have been formalized in Coq 8.12 \cite{coq-8.12}: see the link to supplementary material in the top matter of this article.}
 
 \paragraph*{Type-theoretic notations and assumptions}
 
@@ -139,54 +146,60 @@ We work in a standard intensional type theory with
 dependent function types $\Pi_{a : A}B[a]$ (also written $\forall_{a : A}B[a]$, $(a : A) \to B[a]$, non-dependent version $A \to B$, constructed as $(x \mapsto y[x])$ or $(\lambda x.\;y[x])$),
 dependent pair types $\Sigma_{a : A}B[a]$ (also written $(a : A) \times B[a]$, non-dependent version $A \times B$, constructed as $(x, y)$, destructed as $\fst p$, $\snd p$),
 finite types $\zero$, $\one$ (with inhabitant $\star$), $\bool$ (with inhabitants $\false$ and $\true$, aliased to $\codeO$ and $\codeS$ when we are talking about constructing the natural numbers),
-$W$ types $W_{a : A}B[a]$ (constructor $\sup{a}{f}$ for $a : A$ and $f : B[a] \to W_{a}B[a]$),
+$\W$ types $\W_{a : A}B[a]$ (constructor $\sup{a}{f}$ for $a : A$ and $f : B[a] \to \W_{a}B[a]$),
 identity types $\IdA{A}{x}{y}$ (constructor $\refl$, destruction of $e : \Id{x}{y}$ keeps $x$ fixed and generalizes over $y$ and $e$),
-and a universe $U$.
+and a universe $\U$.
 We define the coproduct $A + B$ as $\sum_{b : \bool}\caset{b}{\false\mapsto A, \true\mapsto B}$, and notate the injections as $\inl$ and $\inr$.
 
-Function extensionality is the principle that pointwise equal functions are equal, and uniqueness of identity proofs is the principle that any two elements of $\Id{x}{y}$ are equal. We do \emph{not} assume either of these principles.
+Function extensionality is the principle that $\forall_x\Id{(f\;x)}{(g\;x)}$ implies $\Id{f}{g}$, and uniqueness of identity proofs is the principle that $\IdA{\Id{x}{y}}{p}{q}$ is always inhabited. We do \emph{not} assume either of these principles.
 
-We require strict $\beta$-rules for all type formers, and strict $\eta$ for $\Sigma$ (that $p = (\fst p, \snd p)$) and $\Pi$ ($f = (x \mapsto f x)$). For convenience we will also assume strict $\eta$ for $\one$ ($u = \star$).
+We require strict $\beta$-rules for all type formers, and strict $\eta$ for $\Sigma$ (that $p = (\fst p, \snd p)$) and $\Pi$ (that $f = (x \mapsto f x)$). For convenience we will also assume strict $\eta$ for $\one$ (that $u = \star$).
 
-\section{Constructing \texorpdfstring{$\N$}{ℕ} (for real this time)}
+\section{Constructing \texorpdfstring{$\N$}{ℕ} (for real this time)}\label{construct-N}
 
-We run into problems in the $\codeO$ case because we don't know that $f = (x\mapsto\caset{x}{})$.
+We run into problems in the $\codeO$ case because we don't know that $f = (x\mapsto\caset{x}{})$ for an arbitrary $f : \zero \to \preN$.
 To solve those problems, we will assume them away.
 To construct $\N$, we will first define a predicate $\canonical : \preN \to U$ such that $\canonical(\sup{\codeO}{f})$ implies $\Id{(x\mapsto\caset{x}{})}{f}$.
 We then let $\N = \Sigma_{x : \preN}\canonical x$ be the canonical elements of $\preN$ (with $\preN$ defined by \cref{define-preN}).
-This predicate will be defined by induction on $W$, so we can start out with \[\canonical (\sup{x}{f}) =\; ? : U\qquad\text{($x : \bool$, $f : \dots \to \preN$, may use $\canonical (f\; i) : U$)}.\]
+This predicate will be defined by induction on $\W$, so we can start out with \[\canonical (\sup{x}{f}) =\; ? : \U\qquad\text{($x : \bool$, $f : \dots \to \preN$, may use $\canonical (f\; i) : \U$)}.\]
 The obvious next thing to do is to split by cases on $x : \bool$:
 \begin{gather*}
-\canonical (\sup{\codeO}{f}) =\; ? : U\qquad\text{($f : \zero \to \preN$, may use $\canonical(f\;i)$)},\\
-\canonical (\sup{\codeS}{f}) =\; ? : U\qquad\text{($f : \one \to \preN$, may use $\canonical(f\;i)$)}.
+\canonical (\sup{\codeO}{f}) =\; ? : \U\qquad\text{($f : \zero \to \preN$, may use $\canonical(f\;i)$)},\\
+\canonical (\sup{\codeS}{f}) =\; ? : \U\qquad\text{($f : \one \to \preN$, may use $\canonical(f\;i)$)}.
 \end{gather*}
+
 We need canonical terms to be \emph{hereditarily} canonical, that is, we want to include the condition that all sub-terms are canonical.
 For the $\codeS$ case, thanks to the strict $\eta$ rules for $\one$ and $\Pi$, the types $\canonical(f\;\star)$ and $(i : \one) \to \canonical(f\;i)$ are equivalent; we can use either one.
 This will be the only condition we need for the $\codeS$ case, so we can complete this part of the definition:
 \[\canonical (\sup{\codeS}{f}) =\canonical(f\;\star).\]
+
 The $\codeO$ case is the interesting one.
-The blind translation of ``every sub-term is canonical'' is $(i : \zero) \to \canonical(f\;i)$.
-However, this leads to the same problem as before; without function extensionality we can't work with functions out of $\zero$.
-Luckily, we have escaped the rigid constraints of the $W$ type former, and have the freedom to translate the recursive condition as simply $\one$.
+The blind translation of ``every sub-term is canonical'' is $(i : \zero) \to \canonical(f\;i)$,
+but this leads to the same problem as before: without function extensionality we can't work with functions out of $\zero$.
+Luckily, we have escaped the rigid constraints of the $\W$ type former, and have the freedom to translate the recursive condition as simply $\one$.
 No sub-terms of zero, no conditions necessary!
-\[\canonical (\sup{\codeO}{f}) =\; ? : U\qquad\text{($f : \zero \to \preN$)}\]
+\[\canonical (\sup{\codeO}{f}) =\; ? : \U\qquad\text{($f : \zero \to \preN$)}\]
+
 That is all well and good, but we can't forget why we are here in the first place: we need $\Id{(x\mapsto\caset{x}{})}{f}$.
 Luckily, there is a hole just waiting to be filled:
 \[\canonical (\sup{\codeO}{f}) = \Id{(x\mapsto\caset{x}{})}{f}.\]
 
-\begin{definition}The complete definition of $\N$:
+\begin{figure}[t]
+\fbox{\begin{minipage}{\textwidth}\setlength{\abovedisplayskip}{0pt} % Remove excess vertical space
 \begin{gather}
-\preN = W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}) : U,\nonumber\\
+\preN = \W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}) : \U,\nonumber\\
 \begin{aligned}
-\canonical& : \preN \to U,\\
+\canonical& : \preN \to \U,\\
 \canonical& (\sup{\codeO}{f}) = \Id{(x\mapsto\caset{x}{})}{f},\\
 \canonical& (\sup{\codeS}{f}) = \canonical(f\;\star),
 \end{aligned}\label{define-canonical}\\
-\N = \Sigma_{x : \preN}\canonical x : U,\label{define-N}\\
+\N = \Sigma_{x : \preN}\canonical x : \U,\label{define-N}\\
 \zerO = (\sup{\codeO}{(x\mapsto\caset{x}{})},\refl) : \N,\label{define-O}\\
 \Succ = n \mapsto (\sup{\codeS}{(\star \mapsto \fst n)},\snd n) : \N \to \N.\label{define-S}
 \end{gather}
-\end{definition}
+\end{minipage}}
+\caption{The complete definition of $\N$.}
+\end{figure}
 
 \paragraph*{Induction}
 
@@ -194,23 +207,25 @@ Now we are ready for the finale: induction for $\N$ with the right computational
 
 Assume we are given a type $P[n]$ which depends on $n : \N$, along with terms $\ISO : P[\zerO]$ and $\ISS : \forall_{n : \N}P[n] \to P[\Succ\;n]$. Our mission is to define a term $\recN : \forall_{n : \N}P[n]$. Happily, the proof goes through if we simply follow our nose.
 
-We begin by inducting on $\fst n : \preN$, and then case on $\codeO$ vs $\codeS$, just like the definition of $\canonical$.
+We begin by performing induction on $\fst n : \preN$, and then case on $\codeO$ vs $\codeS$, just like the definition of $\canonical$.
 \begin{gather*}
 \recN (\sup{\codeO}{f},y) =\; ? : P[(\sup{\codeO}{f},y)]\qquad\text{($f : \zero \to \preN$, $y : \Id{(x\mapsto\caset{x}{})}{f}$)},\\
 \recN (\sup{\codeS}{f},y) =\; ? : P[(\sup{\codeS}{f},y)]\qquad\text{($f : \one \to \preN$, $y : \canonical(f\;\star)$)}.\\
 \text{(where we may make recursive calls $\recN(f\; i, y')$ for any $i$ and $y'$)}
 \end{gather*}
 
-In the $\codeS$ case, $f = (\star \mapsto f\; \star)$ by the $\eta$ rules for $\one$ and $\Pi$, and thus $(\sup{\codeS}{f}, y) = S\;(f\; \star, y)$. We can thus define
+In the $\codeS$ case, $f = (\star \mapsto f\; \star)$ by the $\eta$ rules for $\one$ and $\Pi$, and thus $(\sup{\codeS}{f}, y) = \Succ\;(f\; \star, y)$. We can thus define
 \begin{equation*}\recN (\sup{\codeS}{f},y) = \ISS\;(f\;\star, y)\;(\recN(f\;\star, y)).\end{equation*}
 
 The $\codeO$ case is again the interesting one, but it is only a little tricky. We know $\ISO : P[ (\sup{\codeO}{(x\mapsto\caset{x}{})},\refl)]$, and we want $P[(\sup{\codeO}{f},y)]$. But since we have $y : \Id{(x\mapsto\caset{x}{})}{f}$, this is a direct application of the eliminator for $\Idop$.
 We thus complete the definition of $\recN$ with
 \begin{equation*}\recN (\sup{\codeO}{f},y) = \caset{y}{\refl \mapsto \ISO}.\end{equation*}
 
-Examining the definitions, we can see that as long as we have strict $\eta$ for $\Sigma$ and strict $\beta$ for $\Idop$, $\recN \zerO = \ISO$ and $\recN(\Succ n) = \ISS\;n\;(\recN\;n)$. Thus we have indeed defined the natural numbers with the expected induction principle and computational behavior out of the $W$ type.
+Examining the definitions, we can see that as long as we have strict $\eta$ for $\Sigma$ and strict $\beta$ for $\Idop$, $\recN \zerO = \ISO$ and $\recN(\Succ n) = \ISS\;n\;(\recN\;n)$. Thus we have indeed defined the natural numbers with the expected induction principle and computational behavior in terms of the $\W$ type.
 
-\begin{definition}Induction for $\N$: given
+\begin{figure}[t]
+\fbox{\begin{minipage}{\textwidth}
+Given
 \begin{gather}
 \text{a type $P[n]$ depending on $n : \N$},\\
 \ISO : P[\zerO],\\
@@ -226,65 +241,69 @@ we have
 \recN \zerO = \ISO\label{recN-eqO},\\
 \recN(\Succ n) = \ISS\;n\;(\recN\;n)\label{recN-eqS}.
 \end{gather}
-\end{definition}
+\end{minipage}}
+\caption{Induction for $\N$.}
+\end{figure}
 
 \begin{theorem}
-    The natural numbers can indeed be constructed in intensional type theory with only type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $W$, $\Idop$ and $U$, such that the induction principle has the expected computational behavior.
+    The natural numbers can be constructed in intensional type theory with only type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $\W$, $\Idop$ and $\U$, such that the induction principle has the expected computational behavior.
 \end{theorem}
 
 \section{The General Case}\label{general-case}
-Above, we have refuted a widely held intuition about the expressiveness of intensional type theory with $W$ as the only primitive inductive type. Once we know we can construct the natural numbers, that we can construct lots of other inductive types is much less surprising.
+Above, we have refuted a widely held intuition about the expressiveness of intensional type theory with $\W$ as the only primitive inductive type. Once we know we can construct the natural numbers, that we can construct lots of other inductive types is much less surprising.
 
-Nevertheless, for completeness we define below an internal type of codes for inductive types along with the construction from $W$ types of the interpretation of those codes. For convenience, in this section we assume that we have not just one universe $U$ but an infinite cumulative tower of universes $U_0 : U_1 : \dots : U_i : U_{i+1} : \dots$ all closed under $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $W$, and $\Idop$ such that $A : U_i$ implies $A : U_{i+1}$.
+Nevertheless, for completeness we define below an internal type of codes for inductive types along with the construction from $\W$ types of the interpretation of those codes. For convenience, in this section we assume that we have not just one universe $\U$ but an infinite cumulative tower of universes $\U_0 : \U_1 : \dots : \U_i : \U_{i+1} : \dots$ all closed under $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $\W$, and $\Idop$ such that $A : \U_i$ implies $A : \U_{i+1}$.
 
 The end result is a universe of inductive types which is self-describing, or ``levitating'' in the sense of \cite{levitation}.
 
 \subsection{Inductive Codes}\label{inductive-codes}
-We will let $\Code_i : U_{i+1}$ be the type of codes for inductive types in $U_i$, and implement it for now as a primitive inductive type. In \cref{bootstrap} we will show how to construct $\Code$ itself from $W$.
+We will let $\Code_i : \U_{i+1}$ be the type of codes for inductive types in $\U_i$, and implement it for now as a primitive inductive type. In \cref{bootstrap} we will show how to construct $\Code$ itself from $\W$.
 
 To define $\Code$, we adapt the axiomatization of induction-recursion from \cite{finite-axiom-IR}. Thus $\Code_i$ is generated by the constructors
-\[\nil : \Code_i,\quad \nonind : (A : U_i) \to (A \to \Code_i) \to \Code_i, \quad \ind : U_i \to \Code_i \to \Code_i.\]
-Looking at $U_i$ as the usual category of types and functions, a code $A : \Code_i$ defines an endofunctor $F_A : U_i \to U_i$ defined by recursion on $A$ by
+\[\nil : \Code_i,\quad \nonind : (A : \U_i) \to (A \to \Code_i) \to \Code_i, \quad \ind : \U_i \to \Code_i \to \Code_i.\]
+Looking at $\U_i$ as the usual category of types and functions, a code $A : \Code_i$ defines an endofunctor $F_A : \U_i \to \U_i$ defined by recursion on $A$ by
 \begin{gather}
-F_{\nil} = X \mapsto \one,\\
-F_{\nonind(A,B)} = X \mapsto \Sigma_{a : A} F_{(B\;a)} X,\\
-F_{\ind(\Ix, B)} = X \mapsto (\Ix \to X) \times F_{B} X.
+F_{\nil}\;X = \one,\\
+F_{\nonind(A,B)}\;X = \Sigma_{a : A} F_{(B\;a)}\; X,\\
+F_{\ind(\Ix, B)}\;X = (\Ix \to X) \times F_{B}\; X.
 \end{gather}
 
 \begin{example}We can define a code for the natural numbers as \[\mathquote{\N} = \nonind(2, b \mapsto \caset{b}{\codeO \mapsto \nil, \codeS\mapsto \ind(1, \nil)}) : \Code_0.\]
 \end{example}
 
-Each code also defines a polynomial functor $G_A = X \mapsto \Sigma_{s : S_A} (P_A\;s \to X)$, which is what is used in the standard construction:
+Each code also defines a polynomial functor $G_A\;X = \Sigma_{s : S_A} (P_A\;s \to X)$, which is what is used in the standard construction:
 \begin{align}
 &S_{\nil} = 1 & &P_{\nil}\;\star = 0\\
 &S_{\nonind(A,B)} = \Sigma_{a : A} S_{(B\;a)} & &P_{\nonind(A, B)}\;(a,b) = P_{(B\;a)}\;b \\
 &S_{\ind(\Ix, B)} = S_B & &P_{\ind(\Ix, B)}\;b = \Ix + P_B\;b.\\
-&\preEl A = W_{s : S_A}P_A.
+&\preEl A = \W_{s : S_A}P_A.
 \end{align}
 
-There is an easy-to-define natural transformation $\epsilon : F \Rightarrow G$, and even has a left inverse on objects, but without function extensionality $\epsilon$ does not have a right inverse (roughly speaking, $\epsilon$ is not surjective); there are usually terms $g : G\;X$ not in the image of $\epsilon$. This is exactly the problem we ran into in the case of the natural numbers: the map $(\star \mapsto (x \mapsto \caset{x}{})) : 1 \to (0 \to X)$ is not surjective.
+There is an easy-to-define natural transformation $\epsilon : F \Rightarrow G$, and it even has a left inverse on objects, but without function extensionality $\epsilon$ does not have a right inverse (roughly speaking, $\epsilon$ is not surjective); there are usually terms $g : G\;X$ not in the image of $\epsilon$. This is exactly the problem we ran into in the case of the natural numbers: the map $(\star \mapsto (x \mapsto \caset{x}{})) : 1 \to (0 \to X)$ is not surjective.
 
-The last component we need is $\All_A\;s : (Q : P_A\;s \to U_j) \to U_j$ (for universe level $j\geq i$), a refined version of $\forall_p, Q\;p$, or ``$Q$ holds at every position'':
+The last component we need is $\All_A\;s : (Q : P_A\;s \to \U_j) \to \U_j$ (for universe level $j\geq i$), the quantifier ``holds at every position'' (a refinement of $\forall_p, Q\;p$):
 \begin{gather}
 \All_{\nil}\star\;Q = \one,\\
 \All_{\nonind(A,B)}(a,b)\;Q = \All_{(B\;a)}b\;Q,\\
 \All_{\ind(\Ix, B)}b\;Q = (\forall_i,Q\;(\inl i)) \times \All_{B}b\;(Q \circ \inr).
 \end{gather}
-Noting that $\snd (\epsilon\; t) : P\;(\fst (\epsilon\;t)) \to \preEl A$ enumerates the sub-terms of $t : F\;(\preEl A)$, $\All (Q \circ \snd (\epsilon\;t))$ lets us lift a predicate $Q : X \to U_j$ to a predicate over $t : F\;X$.
-\begin{lemma}\label{split-equiv}There is an equivalence $\splitequiv$ (in the sense of a function with contractible fibers) \begin{equation}
-\splitequiv : F\;(\Sigma_{x : X}C\;x) \cong \Sigma_{(t : F\;X)}\All (C\circ \snd (\epsilon\;t)),
+
+Noting that $\snd (\epsilon\; t) : P\;(\fst (\epsilon\;t)) \to X$ enumerates the sub-terms of $t : F\;X$, $\All (Q \circ \snd (\epsilon\;t))$ lets us lift a predicate $Q : X \to \U_j$ to a predicate over $t : F\;X$.
+
+\begin{lemma}\label{split-equiv}There is an equivalence $\splitequiv$ (\`a la Voevodsky, a function with contractible fibers) \begin{equation}
+\splitequiv : F\;(\Sigma_{x : X}C\;x) \simeq \Sigma_{(t : F\;X)}\All (C\circ \snd (\epsilon\;t)).
 \end{equation}
-the first component of which is $F\;\fst$.
 \end{lemma}
+
 \begin{proof}
 Follows easily by induction on the code $A$.
 \end{proof}
 
 \subsection{The General Construction}
-We are finally ready to define the true construction of inductive types $\El : \Code \to U_i$. As with natural numbers, we define a ``canonical'' predicate on $\preEl A$, which says that ``all subterms are canonical, and this node is in the image of $\epsilon$''.
+We are finally ready to define the true construction of inductive types $\El : \Code \to \U_i$. As with natural numbers, we define a ``canonicity'' predicate on $\preEl A$, which says that ``all subterms are canonical, and this node is in the image of $\epsilon$''.
 This translates as:
 \begin{equation}
-\canonical (\sup{s}{f}) = \All (\canonical \circ f) \times (t : F\;(\preEl A)) \times \Id{(\epsilon\; t)}{(s, f)} : U_i,\end{equation}
+\canonical (\sup{s}{f}) = \All (\canonical \circ f) \times (t : F\;(\preEl A)) \times \Id{(\epsilon\; t)}{(s, f)} : \U_i,\end{equation}
 and thus we finally have \begin{equation}\El\;A = \Sigma_{x : \preEl A} \canonical x.\end{equation}
 For the constructors, we expect to have $\intro : F\;(\El A) \to \El A$, which we define by
 \begin{equation}
@@ -293,51 +312,55 @@ For the constructors, we expect to have $\intro : F\;(\El A) \to \El A$, which w
 using the equivalence $\splitequiv$ from \cref{split-equiv} to split $x : F\;(\El A)$ into $\fst(\splitequiv\;x) : F\;(\preEl A)$ and $\snd(\splitequiv\;x) : \All(\canonical \circ \snd(\epsilon\;\fst\;(\splitequiv\;x)))$.
 
 \subsection{General Induction}
-When we go to define the induction principle for $\El A$, we are given $P : \El A \to U_j$ for some $j \geq i$ and the induction step $\IS : \forall_{(x : F\;(\El A))}\All(P \circ \snd(\epsilon\;x)) \to P\;(\intro x)$, and want to define $\rec : \forall_{(x : \El A)}P\;x$. The definition proceeds by induction on $\fst x$:
-\[\rec(\sup{s}{f},(h,t,e)) ={} ? : P\;(\sup{s}{f},(h,t,e))\qquad h : \All(\canonical \circ f) \quad  e : \Id{(\epsilon \;t)}{(s,f)},\] and we have induction hypothesis $H = p \mapsto c \mapsto \rec(f\;p,c) : \forall_p\forall_c P\;(f\;p,c)$. Next, we destruct the identity proof $e$, generalizing over both $h$ and $H$, leaving us with
-\[\rec(\supop(\epsilon\;t),(h,t,\refl)) ={} ? : P\;(\supop(\epsilon\;t),(h,t,\refl)),\] for $t : F\;(\preEl A)$, $h : \All(\canonical\circ\snd(\epsilon\;t))$, and $H : \forall_p\forall_cP\;(\snd(\epsilon\;t)\;p,c)$. The last step to bring us in line with the definition of $\intro$ is to use the equivalence from \cref{split-equiv} to replace $(t, h)$ with $\splitequiv\;x$ for some $x : F\;(\El A)$, leaving us with
+When we go to define the induction principle for $\El A$, we are given $P : \El A \to \U_j$ for some $j \geq i$ and the induction step $\IS : \forall_{(x : F\;(\El A))}\All(P \circ \snd(\epsilon\;x)) \to P\;(\intro x)$, and want to define $\rec : \forall_{(x : \El A)}P\;x$. The definition proceeds by induction on $\fst x$:
+\[\rec(\sup{s}{f},(h,t,e)) ={} ? : P\;(\sup{s}{f},(h,t,e))\qquad h : \All(\canonical \circ f) \quad  e : \Id{(\epsilon \;t)}{(s,f)},\] and we have induction hypothesis $H = p \mapsto c \mapsto \rec(f\;p,c) : \Pi_p\Pi_c P\;(f\;p,c)$. Next, we destruct the identity proof $e$, generalizing over both $h$ and $H$, leaving us with
+\[\rec(\supop(\epsilon\;t),(h,t,\refl)) ={} ? : P\;(\supop(\epsilon\;t),(h,t,\refl)),\] for $t : F\;(\preEl A)$, $h : \All(\canonical\circ\snd(\epsilon\;t))$, and $H : \Pi_p\Pi_c P\;(\snd(\epsilon\;t)\;p,c)$. The last step to bring us in line with the definition of $\intro$ is to use the equivalence from \cref{split-equiv} to replace $(t, h)$ with $\splitequiv\;x$ for some $x : F\;(\El A)$, leaving us with
 \[\rec(\supop(\epsilon\;(\fst(\splitequiv\;x))),(\snd(\splitequiv\;x),\fst(\splitequiv\;x),\refl)) ={} ? : P\;(\intro x)\]
-and induction hypothesis $H : \forall_p\forall_c P\;(\snd(\epsilon\;(\fst(\splitequiv\;x)))\;p,c)$. We can then apply $\IS$, but that leaves us with an obligation to prove $\All (P\circ\snd(\epsilon\;x))$. Fortunately, it is easy to show by induction on the code $A$ that our hypothesis $H$ is sufficient to dispatch this obligation.
+and induction hypothesis $H : \Pi_p\Pi_c P\;(\snd(\epsilon\;(\fst(\splitequiv\;x)))\;p,c)$. We can then apply $\IS$, but that leaves us with an obligation to prove $\All (P\circ\snd(\epsilon\;x))$. Fortunately, it is easy to show by induction on the code $A$ that our hypothesis $H$ is sufficient to dispatch this obligation.
 
 This completes the definition of the induction principle, and it can be observed on concrete examples like the natural numbers to have the expected computational behavior. We can also prove a propositional equality $\Id{(\rec(\intro x))}{(\IS\;x\;(\rec\circ \snd(\epsilon\;x)))}$ witnessing the expected computation rule, and observe on concrete examples that this witness computes to reflexivity. The details of this construction have all been formalized in Coq.
 
 \subsection{Bootstrapping}\label{bootstrap}
-In \cref{inductive-codes} we postulated the type $\Code_i$ to be a primitive inductive type, which leads to the question of whether the general construction we have proposed is \emph{really} constructing inductive types out of $W$ or whether it is making sneaky use of the inductive structure of $\Code_i$ to perform the construction.
+In \cref{inductive-codes} we postulated the type $\Code_i$ to be a primitive inductive type, which leads to the question of whether the general construction we have proposed is \emph{really} constructing inductive types out of $\W$ or whether it is making sneaky use of the inductive structure of $\Code_i$ to perform the construction.
 
-As a first observation, $\Code_i : U_{i+1}$ while $\El : \Code_i \to U_i$, thus $\Code_i$ can't appear as data in $\El A$: it is too big! However, this argument doesn't show that we can completely eliminate $\Code_i$ from the construction.
+As a first observation, $\Code_i : \U_{i+1}$ while $\El : \Code_i \to \U_i$, thus $\Code_i$ can't appear as data in $\El A$: it is too big! However, this argument doesn't show that we can completely eliminate $\Code_i$ from the construction.
 
 Next, we observe that the inductive type $\Code_i$ itself has a code $\mathquote{\Code_i} : \Code_{i+1}$:
 \begin{align*}
-\mathquote{\Code_i} ={}& \nonind((1+U_i)+U_i,t \mapsto \case t\;\mathtt{of}\;\{\\
+\mathquote{\Code_i} ={}& \nonind((1+\U_i)+\U_i,t \mapsto \case t\;\mathtt{of}\;\{\\
 &\quad \inl(\inl\star) \mapsto \nil,&&\text{(case $\nil$)} \notag\\
 &\quad \inl(\inr A) \mapsto \ind(A,\nil),&&\text{(case $\nonind$)} \notag\\
 &\quad \inr \Ix \mapsto \ind(1,\nil),&&\text{(case $\ind$)} \notag\\
 &\notag\}).
 \end{align*}
-Then we can propose to define $\Code_i = \El \mathquote{\Code_i}$, but this is a circular definition: we define $\Code_i$ by using recursion on $\Code_{i+1}$. What we really want, and in some ways should be able to expect, is that $\El\mathquote{\Code_i}$ \emph{computes} to a normal form which no longer mentions $\Code$ but is expressed purely in terms of $W$. We could then tie the knot by defining $\Code_i$ to be what $\El \mathquote{\Code_i}$ \emph{will compute to}, once we have defined $\El$.
 
-There is just one problem to resolve, which is that currently, $\El$, which is defined by recursion on codes, gets stuck on $\El (\caset{t}{\dots})$ which is used to branch on constructor tags. We are missing some sort of commuting conversion \cite[section 10]{girard-proofs-and-types}. Fortunately, we can do without it, by reifying branching on constructor tags as part of $\Code$. We add another constructor
+Then we can propose to define $\Code_i = \El \mathquote{\Code_i}$, but this is a circular definition: we define $\Code_i$ by using recursion on $\Code_{i+1}$. What we really want, and in some ways should be able to expect, is that $\El\mathquote{\Code_i}$ \emph{computes} to a normal form which no longer mentions $\Code$ but is expressed purely in terms of $\W$. We could then tie the knot by defining $\Code_i$ to be what $\El \mathquote{\Code_i}$ \emph{will compute to}, once we have defined $\El$.
+
+There is just one problem to resolve, which is that currently, $\El$, which is defined by recursion on codes, gets stuck on $\El (\caset{t}{\dots})$ which is used to branch on constructor tags;
+we are missing some sort of commuting conversion \cite[section 10]{girard-proofs-and-types}.
+Fortunately, we can do without it, by reifying branching on constructor tags as part of $\Code$. We add another constructor
 \begin{equation}
-\choice : \Code_i \to \Code_i \to \Code_i,\qquad F_{\choice(A,B)} = X \mapsto F_A\;X + F_B\;X
+\choice : \Code_i \to \Code_i \to \Code_i,\qquad F_{\choice(A,B)}\;X = F_A\;X + F_B\;X
 \end{equation}
 which encodes the simple binary sum of functors, specializing the dependent sum of functors $\nonind(2,b\mapsto\caset{b}{\dots})$ (but with all proofs essentially the same). With this in hand, we can define
 \begin{align}
 \mathquote{\Code_i} ={}& \choice(\choice(\\
 &\quad\nil,&\text{(case $\nil$)}\notag\\
 &\quad\choice(\notag\\
-&\qquad\nonind(U_i,A\mapsto \ind(A,\nil)),&\text{(case $\nonind$)}\notag\\
+&\qquad\nonind(\U_i,A\mapsto \ind(A,\nil)),&\text{(case $\nonind$)}\notag\\
 &\qquad\ind(1,\ind(1,\nil)))),&\text{(case $\choice$)}\notag\\
-&\quad\nonind(U_i,\Ix \mapsto \ind(1,\nil))).&\text{(case $\ind$)}\notag
+&\quad\nonind(\U_i,\Ix \mapsto \ind(1,\nil))).&\text{(case $\ind$)}\notag
 \end{align}
-With this adjustment, the structure of the code is not hidden inside $\case$, and the computation of $\El\mathquote{\Code_i}$ proceeds to completion without becoming stuck, resulting in a term which does not mention $\Code$ at all. From there, we can define $\El$ such that $\El\mathquote{\Code_i} = \Code_i$, as in \cite{levitation} but with no invisible cables, just the $W$ type.
+
+With this adjustment, the structure of the code is not hidden inside $\case$, and the computation of $\El\mathquote{\Code_i}$ proceeds to completion without becoming stuck, resulting in a term which does not mention $\Code$ at all. From there, we can define $\El$ such that $\El\mathquote{\Code_i} = \Code_i$, as in \cite{levitation} but with no invisible cables, just the $\W$ type.
 \begin{theorem}
-    In intensional type theory with type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $W$, $\Idop$ and an infinite tower of universes $U_i$, there exist terms $\Code_i : U_{i+1}$ such that $\Code_i$ is a type of codes for inductive types, constructed by $\El : \Code_i \to U_i$, and terms $\mathquote{\Code_i} : \Code_{i+1}$ such that $\El\mathquote{\Code_i} = \Code_i$.
+    In intensional type theory with type formers $\zero$, $\one$, $\bool$, $\Sigma$, $\Pi$, $\W$, $\Idop$ and an infinite tower of universes $\U_i$, there exist terms $\Code_i : \U_{i+1}$ such that $\Code_i$ is a type of codes for inductive types, constructed by $\El : \Code_i \to \U_i$, and terms $\mathquote{\Code_i} : \Code_{i+1}$ such that $\El\mathquote{\Code_i} = \Code_i$.
 \end{theorem}
 
 \section{Discussion}
 
 \subsection{Composition}
-Being codes for functors, one may ask if $\Code_i$ is closed under composition of functors? As with the codes for inductive-recursive types we have modified, without function extensionality we do not appear to have composition (for similar reasons as considered in \cite{variations-IR}). Indeed, experiments suggest that the general construction of a class of inductive types closed under composition of the underlying functors essentially requires function extensionality. Even worse, to get definitional computation rules for the resulting inductive types, all our attempts have required that transporting over $\funext(x\mapsto \refl)$ computes to the identity, a property which not even cubical type theory \cite{cchm-cubical} satisfies (it is satisfied, however, by observational type theory \cite{observational-type-theory}). Thus, we do not know how to combine a class of inductive types closed under composition constructed from the $W$ type as we have in \cref{general-case} with the the principle of Univalence \cite{hott-book} while maintaining good computational behavior.
+Being codes for functors, one may ask if $\Code_i$ is closed under composition of functors? As with the codes for inductive-recursive types we have modified, without function extensionality we do not appear to have composition (for similar reasons as considered in \cite{variations-IR}). Indeed, experiments suggest that the general construction of a class of inductive types closed under composition of the underlying functors essentially requires function extensionality. Even worse, to get definitional computation rules for the resulting inductive types, all our attempts have required that transporting over $\funext(x\mapsto \refl)$ computes to the identity, a property which not even cubical type theory \cite{cchm-cubical} satisfies (it is satisfied, however, by observational type theory \cite{observational-type-theory}). Thus, we do not know how to combine a class of inductive types closed under composition constructed from the $\W$ type as we have in \cref{general-case} with the the principle of Univalence \cite{hott-book} while maintaining good computational behavior.
 
 We do however wish to emphasize that the construction in \cref{general-case} (which is not closed under composition) is completely compatible with Univalence, and could be implemented in cubical type theory as long as an identity type with strict $\beta$ rule is used.
 
@@ -350,9 +373,9 @@ This construction is also limited in it's expressivity. Nested inductive types s
 
 \subsection{Conclusion}
 
-We have shown that intensional type theory with $W$ and $\Idop$ types is more expressive than was previously believed. It supports not only the natural numbers, but a whole host of inductive types, generated by an internal type of codes, which is itself an inductive type coded for by itself (one universe level up). This brings possibilities for writing generic programs acting on inductive types internally, and perhaps simplifies the general study of extensions of intensional type theory: once you know $W$ works, you know lots of inductive types work (with a few side conditions to check).
+We have shown that intensional type theory with $\W$ and $\Idop$ types is more expressive than was previously believed. It supports not only the natural numbers, but a whole host of inductive types, generated by an internal type of codes, which is itself an inductive type coded for by itself (one universe level up). This brings possibilities for writing generic programs acting on inductive types internally, and perhaps simplifies the general study of extensions of intensional type theory: once you know $\W$ works, you know lots of inductive types work (with a few side conditions to check).
 
-Thus we return to the titular question: why not use $W$ as the foundation of induction in intensional type theory? Equipped with this result, one can no longer say that it is impossible.
+Thus we return to the titular question: why not use $\W$ as the foundation of induction in intensional type theory? Equipped with this result, one can no longer say that it is impossible.
 
 %%
 %% Bibliography
