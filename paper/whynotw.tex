@@ -88,13 +88,13 @@
 
 \DeclareMathOperator{\canonical}{\hyperref[define-canonical]{\mathtt{canonical}}}
 
-\newcommand{\ISO}{\mathrm{ISO}}
-\newcommand{\ISS}{\mathrm{ISS}}
+\newcommand{\ISO}{\hyperref[define-ISO]{\mathrm{ISO}}}
+\newcommand{\ISS}{\hyperref[define-ISS]{\mathrm{ISS}}}
 \newcommand{\IS}{\mathrm{IS}}
 
 \newcommand{\zerO}{\hyperref[define-O]{\mathrm{O}}}
 \DeclareMathOperator{\Succ}{\hyperref[define-S]{S}}
-\DeclareMathOperator{\recN}{\mathrm{rec\mathbb{N}}}
+\DeclareMathOperator{\recN}{\hyperref[define-recN]{\mathrm{rec\mathbb{N}}}}
 
 \DeclareMathOperator{\nonind}{nonind}
 \DeclareMathOperator{\ind}{ind}
@@ -228,8 +228,8 @@ Examining the definitions, we can see that as long as we have strict $\eta$ for 
 Given
 \begin{gather}
 \text{a type $P[n]$ depending on $n : \N$},\\
-\ISO : P[\zerO],\\
-\ISS : \forall_{n : \N}P[n] \to P[\Succ\;n],
+\ISO : P[\zerO],\label{define-ISO}\\
+\ISS : \forall_{n : \N}P[n] \to P[\Succ\;n],\label{define-ISS}
 \end{gather}
 we have
 \begin{gather}
