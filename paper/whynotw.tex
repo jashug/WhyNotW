@@ -133,7 +133,7 @@ The $\W$ type \cite{mltt} captures the essence of induction, and in extensional 
 Taking the elements of the two-element type $\bool$ to be $\codeO$ and $\codeS$, we define \begin{equation}\label{define-preN}\preN = \W_{b : \bool} (\caset{b}{\codeO \mapsto \zero, \codeS \mapsto \one}).\end{equation}
 (the tilde distinguishes the standard construction from our refined construction of the natural numbers in \cref{construct-N})
 
-However, as is well known \cite{dybjer-W-encodes-inductive,luo-wellordering,mcbride_wtypes,programming-in-MLTT}, in intensional type theory we cannot prove the induction principle for $\preN$ without function extensionality.
+However, as is well known \cite{dybjer-W-encodes-inductive,luo-wellordering,mcbride_wtypes,programming-in-MLTT}, in intensional type theory we cannot prove the induction principle for $\preN$ without some form of function extensionality.
 The obstacle is in the $\codeO$ case, where we end up needing to prove $P\;f$ for an arbitrary $f : \zero \to \preN$, when we only know $P\;(x\mapsto\caset{x}{})$.
 
 Can this obstacle be avoided?
@@ -364,10 +364,15 @@ Being codes for functors, one may ask if $\Code_i$ is closed under composition o
 
 We do however wish to emphasize that the construction in \cref{general-case} (which is not closed under composition) is completely compatible with Univalence, and could be implemented in cubical type theory as long as an identity type with strict $\beta$ rule is used.
 
+\subsection{Canonicity}
+Despite being constructed from $W$ types, our natural numbers enjoy the canonicity property (that for every closed term $n$ of type $\N$, either $n = \zerO$ or $n = \Succ m$ for some closed $m : \N$), at least as long as $\bool$ and $\Idop$ enjoy canonicity (closed $b : \bool$ implies $b = \codeO$ or $b = \codeS$, and closed $e : \Id{x}{y}$ implies $e = \refl$ and $x = y$). The trick is that when we have some representation of zero, it looks like $(\sup{\codeO}{f},e)$, where $e$ is a closed term of type $\Id{(x\mapsto\caset{x}{})}{f}$, and thus by canonicity for $\Idop$, this must be $(\sup{\codeO}{(x\mapsto\caset{x}{})},\refl) = \zerO$.
+
+However, in a situation like cubical type theory where function extensionality holds, $\Idop$ no longer enjoys canonicity, and neither does our construction of the natural numbers.
+
 \subsection{Problems}
 What are the problems with using this construction as the foundation for inductive types in a proof assistant? While we have shown bare possibility, this is not an obviously superior solution when compared to the inductive schemes present in proof assistants today.
 
-The construction is complex, which has the possibility of confusing unification and other elaboration algorithms. While the reduction behavior simulates the expected such, the reduction engine has to make many steps to simulate one step of a primitive inductive type, which can lead to a large slowdown. As an example, we observed the general construction slow down from seconds to check to half an hour when replacing primitive inductive types the bootstrapped definition of $\Code$. Understanding exactly why this slowdown happens and how to alleviate it is an important area of further study.
+The construction is complex, which has the possibility of confusing unification and other elaboration algorithms. While the reduction behavior simulates the expected such, the reduction engine has to make many steps to simulate one step of a primitive inductive type, which can lead to a large slowdown. As an example, we observed the general construction slow down from seconds to check to half an hour when replacing primitive inductive types the bootstrapped definition of $\Code$. Understanding exactly why this slowdown happens and how to alleviate it is an important question to be answered before attempting to apply this construction in practice.
 
 This construction is also limited in it's expressivity. Nested inductive types such as $\mathtt{Inductive}\;\mathtt{tree} := \mathtt{node} : \mathtt{list}\;\mathtt{tree} \to \mathtt{tree}$ do not appear to be constructible, nor do mutual inductive types landing in a mixture of impredicative and predicative sorts at different levels, and nor do inductive-inductive types.
 
