@@ -130,10 +130,11 @@ Definition v_trans@{i} {A : Type@{i}} {x y z : A}
 
 Notation sum A B :=
   (Σ (b : 2), match b with false => A | true => B end).
+Definition sum'@{i} (A B : Type@{i}) : Type@{i} := sum A B.
 Notation inl a := (false; a).
 Notation inr b := (true; b).
-Notation inl' := (λ a ↦ inl a).
-Notation inr' := (λ b ↦ inr b).
+Definition inl'@{i} {A B : Type@{i}} (a : A) : sum'@{i} A B := inl a.
+Definition inr'@{i} {A B : Type@{i}} (b : B) : sum'@{i} A B := inr b.
 
 Notation "A + B" := (sum A B) : type_scope.
 Notation "A ∨ B" := (sum A B) (at level 85, right associativity) : type_scope.
@@ -143,7 +144,10 @@ Notation "A ⊔ B" := (sum A B) (at level 85, right associativity) : type_scope.
 Definition option@{i} (A : Type@{i}) : Type@{i} := sum 1 A.
 Notation None := (inl ★).
 Notation Some a := (inr a).
-Notation Some' := (λ a ↦ Some a).
+Definition Some'@{i} {A : Type@{i}} (a : A) : option@{i} A := Some a.
 
-(** Notation for tests *)
+(** * Universe *)
+Definition U@{i} := Type@{i}.
+
+(** * Notation for tests *)
 Notation convertible x y := (refl : Id x y).

@@ -10,8 +10,8 @@ paper/whynotw.pdf
 code/Makefile.coq
 code/Makefile.coq.conf
 code/.Makefile.coq.d
-code/*.vo
-code/*.vok
-code/*.vos
-code/*.glob
-code/.*.aux
+code/**/*.vo
+code/**/*.vok
+code/**/*.vos
+code/**/*.glob
+code/**/.*.aux

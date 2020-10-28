@@ -367,7 +367,7 @@ We do however wish to emphasize that the construction in \cref{general-case} (wh
 \subsection{Problems}
 What are the problems with using this construction as the foundation for inductive types in a proof assistant? While we have shown bare possibility, this is not an obviously superior solution when compared to the inductive schemes present in proof assistants today.
 
-The construction is complex, which has the possibility of confusing unification and other elaboration algorithms. While the reduction behavior simulates the expected such, the reduction engine has to make many steps to simulate one step of a primitive inductive type; even if there is no asymptotic slowdown a reasonably large constant factor slowdown may be expected.
+The construction is complex, which has the possibility of confusing unification and other elaboration algorithms. While the reduction behavior simulates the expected such, the reduction engine has to make many steps to simulate one step of a primitive inductive type, which can lead to a large slowdown. As an example, we observed the general construction slow down from seconds to check to half an hour when replacing primitive inductive types the bootstrapped definition of $\Code$. Understanding exactly why this slowdown happens and how to alleviate it is an important area of further study.
 
 This construction is also limited in it's expressivity. Nested inductive types such as $\mathtt{Inductive}\;\mathtt{tree} := \mathtt{node} : \mathtt{list}\;\mathtt{tree} \to \mathtt{tree}$ do not appear to be constructible, nor do mutual inductive types landing in a mixture of impredicative and predicative sorts at different levels, and nor do inductive-inductive types.
 

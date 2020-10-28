@@ -44,7 +44,7 @@ Code@{i} : Code@{j | i <= j} :=
 (* These codes describe functors: *)
 Fixpoint F@{j | i <= j} (A : Code) : Type@{j} → Type@{j} :=
   match A with
-  | nil => λ X ↦ unit
+  | nil => λ X ↦ 1
   | nonind A B => λ X ↦ Σ (a : A), F (B a) X
   | inf_ind Ix B => λ X ↦ (Ix → X) × F B X
   | ind B => λ X ↦ X × F B X

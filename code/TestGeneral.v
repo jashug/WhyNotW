@@ -98,6 +98,7 @@ Module test_code.
 Inductive Code :=
   | nil
   | nonind (A : Type@{i}) (B : A → Code)
+  | choice (A B : Code)
   | inf_ind (Ix : Type@{i}) (B : Code)
   | ind (B : Code) (* morally ind B = inf_ind 1 B *)
 .
@@ -112,7 +113,7 @@ Notation ind' x := (true; true; x).
 Section test_code.
 Universe i.
 Universe i'.
-Constraint i <= i'.
+Constraint i < i'.
 
 Definition Code_code : Code@{i'} :=
   choice
@@ -139,11 +140,12 @@ Definition choice_ (A B : Code_) : Code_ :=
 
 Section code_rect.
 Universe j.
+Constraint i' <= j.
 Context
   (P : Code_ → Type@{j})
   (IS_nil : P nil_)
-  (IS_nonind : ∀ A B, (∀ a, P (B a)) → P (nonind_ A B))
-  (IS_inf_ind : ∀ A B, P B → P (inf_ind_ A B))
+  (IS_nonind : ∀ (A : Type@{i}) B, (∀ a, P (B a)) → P (nonind_ A B))
+  (IS_inf_ind : ∀ (Ix : Type@{i}) B, P B → P (inf_ind_ Ix B))
   (IS_ind : ∀ B, P B → P (ind_ B))
   (IS_choice : ∀ A B, P A → P B → P (choice_ A B))
 .
@@ -152,11 +154,11 @@ Definition IS arg : liftP@{i' i' j} Code_code P arg → P (intro Code_code arg) 
   match arg with
   | nil' [] => λ '[] ↦ IS_nil
   | nonind' [A; B] => λ '[IH] ↦ IS_nonind A B IH
-  | inf_ind' [A; B] => λ '[IH] ↦ IS_inf_ind A B IH
+  | inf_ind' [Ix; B] => λ '[IH] ↦ IS_inf_ind Ix B IH
   | ind' [B] => λ '[IH] ↦ IS_ind B IH
   | choice' [A; B] => λ '[IHA; IHB] ↦ IS_choice A B IHA IHB
   end.
-Definition Code_rect : ∀ A, P A := rec Code_code P IS.
+Definition Code_rect@{|} : ∀ A, P A := rec Code_code P IS.
 
 (* Check that the expected equations hold by rec_eq = refl *)
 Definition test_eq_nil := convertible
@@ -167,9 +169,9 @@ Definition test_eq_nonind A B := convertible
   (convertible
    (Code_rect (nonind_ A B))
    (IS_nonind A B (Code_rect ∘ B))).
-Definition test_eq_inf_ind A B := convertible
-  (rec_eq Code_code P IS (inf_ind' [A; B]))
-  (convertible (Code_rect (inf_ind_ A B)) (IS_inf_ind A B (Code_rect B))).
+Definition test_eq_inf_ind Ix B := convertible
+  (rec_eq Code_code P IS (inf_ind' [Ix; B]))
+  (convertible (Code_rect (inf_ind_ Ix B)) (IS_inf_ind Ix B (Code_rect B))).
 Definition test_eq_ind B := convertible
   (rec_eq Code_code P IS (ind' [B]))
   (convertible (Code_rect (ind_ B)) (IS_ind B (Code_rect B))).

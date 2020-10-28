@@ -6,3 +6,6 @@ Prelude.v
 Nat.v
 General.v
 TestGeneral.v
+Bootstrap.v
+TestBootstrap/Nat.v
+TestBootstrap/TiedKnot.v
